@@ -1,0 +1,25 @@
+// https://github.com/Microsoft/vscode-azurefunctions/wiki/Multiple-function-projects
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "src\\PowerShell"
+		}
+	],
+	"settings": {
+        "debug.internalConsoleOptions": "neverOpen"
+    },
+	"launch": {
+        "configurations": [],
+        "compounds": [
+            {
+                "name": "Attach to both apps",
+                "configurations": [
+                    "Attach to PowerShell Functions"
+                ]
+            }
+        ]
+    }
+}

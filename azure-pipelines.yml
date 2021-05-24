@@ -1,0 +1,390 @@
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+# Learn Pipeline Key Concepts:
+# https://docs.microsoft.com/azure/devops/pipelines/get-started/key-pipelines-concepts
+
+# git branches to trigger build off of
+# https://docs.microsoft.com/azure/devops/pipelines/process/pipeline-triggers
+trigger:
+  branches:
+    include:
+      - main
+      - dev
+  paths:
+    exclude:
+      - README.md
+      - LICENSE
+      - .github/
+      - .vscode/
+      - docs/
+      - media/
+      - .gitignore
+
+name: 'PoshNotify Build and Deploy Pipeline'
+
+variables:
+  # vmImageName: 'ubuntu-latest' # use if you want to build using a MS agent
+  poolName: 'SelfHostedPool' # use if you are running your own agent
+  projectName: 'PoshNotify' # name of project
+  azureServiceConnection: 'PoshNotify-ServiceConnection' # service connection is set up inside Azure DevOps
+  subscriptionId: '$(subscriptionIDP)' # azure subscription ID that you want to deploy to
+  isMain: $[eq(variables['Build.SourceBranchName'], 'main')] # runtime expression
+  isDev: $[eq(variables['Build.SourceBranchName'], 'dev')] # runtime expression
+  ${{ if eq(variables['Build.SourceBranchName'], 'main') }}: # only works if you have a main branch
+    stageName: prod
+    AZURE_RESOURCE_GROUP: '$(projectName)-prod' # resource group name you will deploy resources into
+  ${{ if eq(variables['Build.SourceBranchName'], 'dev') }}: # only works if you have a dev branch
+    stageName: dev
+    AZURE_RESOURCE_GROUP: '$(projectName)-dev' # resource group name you will deploy resources into
+  geoLocation: 'Central US'
+
+stages:
+  - stage: Bootstrap
+    displayName: Initial Setup
+
+    # this job serves for basic setup. it will output some stuff to console for help with debugging
+    # it will also install any needed PowerShell modules
+    jobs:
+
+      # writes out various pipeline variables to the console. very useful for debugging!
+      - job: PowerShellVariableOut
+        displayName: PowerShell Variable Outputs
+        pool:
+          name: $(poolName) # name of the pool to run this job in
+          workspace:
+            clean: all
+        steps:
+          - pwsh: |
+              Write-Host "VM Image $env:VM_IMAGE_NAME"
+              Write-Host "Project Name $env:PROJECT_NAME"
+              Write-Host "Branch $env:BUILD_SOURCEBRANCHNAME"
+              Write-Host "Service Connection $env:AZURE_SERVICE_CONNECTION"
+              Write-Host "Subscription ID $env:SUBSCRIPTION_ID"
+              Write-Host "Stage Name $env:STAGENAME"
+              Write-Host "Resource Group $env:AZURE_RESOURCE_GROUP"
+              Write-Host "Is Main $env:ISMAIN"
+              Write-Host "Is Dev $env:ISDEV"
+              Write-Host "Working Directory: $env:WORKING_DIRECTORY"
+              Write-Host "Artifact Staging Directory: $env:ARTIFACT_STAGING_DIRECTORY"
+              Write-Host "Artifacts Directory: $env:ARTIFACTS_DIRECTORY"
+              Write-Host "Pipeline Workspace: $env:PIPELINE_WORKSPACE"
+            env:
+              POOL_NAME: $(poolName)
+              PROJECT_NAME: $(projectName)
+              BUILD_SOURCEBRANCHNAME: $(Build.SourceBranchName)
+              AZURE_SERVICE_CONNECTION: $(azureServiceConnection)
+              SUBSCRIPTION_ID: $(subscriptionId)
+              STAGENAME: $(stageName)
+              AZURE_RESOURCE_GROUP: $(AZURE_RESOURCE_GROUP)
+              ISMAIN: $(isMain)
+              ISDEV: $(isDev)
+              WORKING_DIRECTORY: $(System.DefaultWorkingDirectory)
+              ARTIFACT_STAGING_DIRECTORY: $(Build.ArtifactStagingDirectory)
+              ARTIFACTS_DIRECTORY: $(System.ArtifactsDirectory)
+              PIPELINE_WORKSPACE: $(Pipeline.Workspace)
+
+      # install required PowerShell modules for other pipeline tasks
+      # do not install Pester here. There is a Pester action that will be run later.
+      - job: InstallModules
+        displayName: Install PowerShell Modules
+        pool:
+          name: $(poolName) # name of the pool to run this job in
+        steps:
+          - pwsh: |
+              Install-Module -Name InvokeBuild -Repository PSGallery -SkipPublisherCheck -Force
+              Install-Module -Name PSScriptAnalyzer -Repository PSGallery -SkipPublisherCheck -Force
+              Install-Module -Name Convert -Repository PSGallery -SkipPublisherCheck -Force
+              Install-Module -Name Az.Accounts -Repository PSGallery -SkipPublisherCheck -Force
+              Install-Module -Name Az.Storage -Repository PSGallery -SkipPublisherCheck -Force
+
+  - stage: PoshNotifyModuleTestandBuild
+    displayName: Posh Notify Module Build
+
+    jobs:
+
+      # this job serves to test, analyze, and build the module that will eventually
+      # be placed in the Modules folder of our Azure Functions deployment
+      - job: InvokeBuild
+        displayName: Invoke-Build PoshNotify
+        pool:
+          name: $(poolName)  # name of the pool to run this job in
+        steps:
+          # analyze the module for violations and build
+          - pwsh: |
+              Invoke-Build -Task ADO -File "$env:WORKING_DIRECTORY\src\PoshNotify\src\PoshNotify.build.ps1"
+            env:
+              WORKING_DIRECTORY: $(System.DefaultWorkingDirectory)
+          # Pester test the module - generate test result file and code coverage file
+          - task: Pester@9
+            inputs:
+              scriptFolder: '$(System.DefaultWorkingDirectory)\src\PoshNotify\src\Tests\*'
+              resultsFile: '$(System.DefaultWorkingDirectory)\Test-Pester.XML'
+              CodeCoverageOutputFile: '$(System.DefaultWorkingDirectory)\CodeCoverage.xml'
+              CodeCoverageFolder: '$(System.DefaultWorkingDirectory)\src\PoshNotify\src\PoshNotify'
+              usePSCore: true
+              PesterVersion: 'OtherVersion'
+              preferredPesterVersion: '4.10.1'
+              failOnStdErr: false
+          # publish the test results for pretty graphs in Azure DevOps
+          - task: PublishTestResults@2
+            inputs:
+              testResultsFormat: 'NUnit'
+              testResultsFiles: '$(System.DefaultWorkingDirectory)\Test-Pester.XML'
+              failTaskOnFailedTests: true
+          # publish the code coverage results for pretty graphs in Azure DevOps
+          - task: PublishCodeCoverageResults@1
+            inputs:
+              codeCoverageTool: 'JaCoCo'
+              summaryFileLocation: '$(System.DefaultWorkingDirectory)\CodeCoverage.xml'
+              pathToSources: '$(System.DefaultWorkingDirectory)'
+              failIfCoverageEmpty: true
+          # publish the built module for use later on in the pipeline
+          - task: PublishPipelineArtifact@1
+            inputs:
+              path: '$(System.DefaultWorkingDirectory)\src\PoshNotify\src\Artifacts'
+              targetPath: '$(Pipeline.Workspace)'
+              artifactName: poshnotifymodule
+              artifactType: pipeline
+
+  - stage: Build
+    displayName: Bicep Build and Artifacts Creation
+
+    jobs:
+
+      # this job serves to validate the bicep code and build it into arm templates
+      # various files will also be copied and collected for artifact publication
+      - job: Build
+        displayName: Validate, Copy, and Publish
+        pool:
+          name: $(poolName)
+
+        steps:
+          # download the PowerShell module we built in the previous stage of the pipeline
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifact: poshnotifymodule
+              path: $(Pipeline.Workspace)\PoshNotify
+          # optional step that outputs all the files in the workspace to console. Useful for debugging.
+          - pwsh: |
+              Get-ChildItem -Recurse -Path $(Pipeline.Workspace) | Write-Host
+          # time to build our bicep files into ARM template format
+          - task: AzureCLI@2
+            displayName: Build ARM Template from bicep file
+            inputs:
+              azureSubscription: '$(azureServiceConnection)'
+              scriptType: pscore
+              scriptLocation: inlineScript
+              inlineScript: |
+                az --version
+                if (-not (Test-Path 'bicep')) {
+                    New-Item -Path . -Name bicep -ItemType Directory | Out-Null
+                }
+                az bicep build --file ./resources/main.bicep --outdir bicep
+          # validation step - a lot happens here.
+          # your generated ARM template will be validated
+          # your parameters json will be validated
+          # this step will check if the resource group you provided exists in the subscription
+          # NOTE: if your resource group does NOT exists it will be CREATED (empty) at THIS STEP.
+          # if your code does something stupid here, like tries to rename a storage account you deployed previously
+          # this is the step that will fail out and say: storage accounts can't be renamed, etc
+          - task: AzureResourceManagerTemplateDeployment@3
+            displayName: 'Validate APIM Templates'
+            inputs:
+              azureResourceManagerConnection: '$(azureServiceConnection)'
+              subscriptionId: '$(subscriptionId)'
+              resourceGroupName: '$(AZURE_RESOURCE_GROUP)'
+              location: '$(geoLocation)'
+              csmFile: bicep/main.json
+              csmParametersFile: resources/parameters/parameters-dev.json
+              deploymentMode: Validation
+          # copy the PowerShell module we downloaded to the Azure Functions Modules folder
+          - task: CopyFiles@2
+            displayName: 'Copy PoshNotify Module Back'
+            inputs:
+              SourceFolder: '$(Pipeline.Workspace)\PoshNotify'
+              TargetFolder: '$(System.DefaultWorkingDirectory)\src\PowerShell\Modules\PoshNotify'
+          # copy the ARM templates we created to the staging directory
+          - task: CopyFiles@2
+            displayName: 'Copy Templates'
+            inputs:
+              SourceFolder: bicep
+              TargetFolder: '$(build.artifactstagingdirectory)'
+          # copy the parameters files to the staging directory
+          - task: CopyFiles@2
+            displayName: 'Copy Parameters'
+            inputs:
+              SourceFolder: resources/parameters
+              TargetFolder: '$(build.artifactstagingdirectory)'
+          # publish the staging directory as our final build artifact. this will be zipped later on!
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish Artifact: drop'
+            inputs:
+              PathtoPublish: '$(build.artifactstagingdirectory)'
+              ArtifactName: 'drop'
+
+
+  - stage: DevDeployment
+    displayName: Deploy to Dev
+    dependsOn: Build
+    condition: succeeded()
+
+    jobs:
+
+      # deploy to dev resouce group
+      - deployment: Deploy
+        displayName: 'Deploying APIM Template'
+        environment: 'dev'
+        pool:
+          name: $(poolName)
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                # create resources in the Azure subscription and resource group
+                - task: AzureResourceManagerTemplateDeployment@3
+                  displayName: 'Deploy/Update APIM (Dev)'
+                  inputs:
+                    deploymentScope: 'Resource Group'
+                    azureResourceManagerConnection: '$(azureServiceConnection)'
+                    subscriptionId: '$(subscriptionId)'
+                    action: 'Create Or Update Resource Group'
+                    resourceGroupName: '$(AZURE_RESOURCE_GROUP)'
+                    location: '$(geoLocation)'
+                    csmFile: '$(Pipeline.Workspace)/drop/main.json'
+                    csmParametersFile: '$(Pipeline.Workspace)/drop/parameters-dev.json'
+                    deploymentMode: 'Complete'
+                    deploymentOutputs: dev_deployment
+                # if your bicep/ARM deployment had outputs in the deployment, they can be captured here
+                - task: PowerShell@2
+                  displayName: 'ARM outputs to variables'
+                  inputs:
+                    filePath: 'parse_arm_deployment_output.ps1'
+                    arguments: '-ArmOutputString ''$(dev_deployment)'''
+                    pwsh: true
+                # optional step that is useful for debugging to see if you got the correct outputs
+                - pwsh: |
+                    Write-Host "STORAGE_ACCOUNT_NAME: $env:STORAGE_ACCOUNT_NAME"
+                    Write-Host "KEY_VAULT_NAME: $env:KEY_VAULT_NAME"
+                    Write-Host "PLAN_NAME: $env:PLAN_NAME"
+                    Write-Host "FUNCTION_APP_NAME: $env:FUNCTION_APP_NAME"
+                    Write-Host "APP_INSIGHTS_NAME: $env:APP_INSIGHTS_NAME"
+                  env:
+                    STORAGE_ACCOUNT_NAME: $(storageAccountName)
+                    KEY_VAULT_NAME: $(keyVaultName)
+                    PLAN_NAME: $(planName)
+                    FUNCTION_APP_NAME: $(functionAppName)
+                    APP_INSIGHTS_NAME: $(appInsightsName)
+                # zip up the build artifacts. this is the zip that will become our Azure Functions!
+                - task: ArchiveFiles@2
+                  displayName: "Archive azure function files"
+                  inputs:
+                    rootFolderOrFile: src/PowerShell
+                    includeRootFolder: false
+                    archiveType: 'zip'
+                    archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+                    replaceExistingArchive: true
+                    verbose: true
+                # publish the zip
+                - task: PublishBuildArtifacts@1
+                  displayName: "Publish Azure function artifact"
+                  inputs:
+                    PathtoPublish: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+                    ArtifactName: 'function'
+                # deploy the zip to our Azure Functions!
+                - task: AzureFunctionApp@1
+                  displayName: "Publish Azure function zip"
+                  inputs:
+                    azureSubscription: $(azureServiceConnection)
+                    appType: functionApp
+                    appName: $(functionAppName)
+                    package: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+                    deploymentMethod: 'auto'
+                    #Uncomment the next lines to deploy to a deployment slot
+                    #deployToSlotOrASE: true
+                    #resourceGroupName: '<Resource Group Name>'
+                    #slotName: '<Slot name>'
+
+  # deploy to prod resouce group
+  # because we are specifying a different stage and environment
+  # combined with the environment specification
+  # a manual approval step will be required before the pipeline goes to prod
+  # also note that only main branch is going to engage this portion of the pipeline
+  - stage: ProdDeployment
+    displayName: Deploy to Prod
+    dependsOn: DevDeployment
+    condition: and(succeeded(), eq(variables.isMain, true))
+
+    jobs:
+      - deployment: Deploy
+        displayName: 'Deploying APIM Template'
+        environment: 'prod'
+        pool:
+          name: $(poolName)
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                # create resources in the Azure subscription and resource group
+                - task: AzureResourceManagerTemplateDeployment@3
+
+                  displayName: 'Deploy/Update APIM (Prod)'
+                  inputs:
+                    deploymentScope: 'Resource Group'
+                    azureResourceManagerConnection: '$(azureServiceConnection)'
+                    subscriptionId: '$(subscriptionId)'
+                    action: 'Create Or Update Resource Group'
+                    resourceGroupName: '$(AZURE_RESOURCE_GROUP)'
+                    location: '$(geoLocation)'
+                    csmFile: '$(Pipeline.Workspace)/drop/main.json'
+                    csmParametersFile: '$(Pipeline.Workspace)/drop/parameters-prod.json'
+                    deploymentMode: 'Complete'
+                    deploymentOutputs: prod_deployment
+                # if your bicep/ARM deployment had outputs in the deployment, they can be captured here
+                - task: PowerShell@2
+                  displayName: 'ARM outputs to variables'
+                  inputs:
+                    filePath: 'parse_arm_deployment_output.ps1'
+                    arguments: '-ArmOutputString ''$(prod_deployment)'''
+                    pwsh: true
+                # optional step that is useful for debugging to see if you got the correct outputs
+                - pwsh: |
+                    Write-Host "STORAGE_ACCOUNT_NAME: $env:STORAGE_ACCOUNT_NAME"
+                    Write-Host "KEY_VAULT_NAME: $env:KEY_VAULT_NAME"
+                    Write-Host "PLAN_NAME: $env:PLAN_NAME"
+                    Write-Host "FUNCTION_APP_NAME: $env:FUNCTION_APP_NAME"
+                    Write-Host "APP_INSIGHTS_NAME: $env:APP_INSIGHTS_NAME"
+                  env:
+                    STORAGE_ACCOUNT_NAME: $(storageAccountName)
+                    KEY_VAULT_NAME: $(keyVaultName)
+                    PLAN_NAME: $(planName)
+                    FUNCTION_APP_NAME: $(functionAppName)
+                    APP_INSIGHTS_NAME: $(appInsightsName)
+                # zip up the build artifacts. this is the zip that will become our Azure Functions!
+                - task: ArchiveFiles@2
+                  displayName: "Archive azure function files"
+                  inputs:
+                    rootFolderOrFile: src/PowerShell
+                    includeRootFolder: false
+                    archiveType: 'zip'
+                    archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+                    replaceExistingArchive: true
+                    verbose: true
+                # publish the zip
+                - task: PublishBuildArtifacts@1
+                  displayName: "Publish Azure function artifact"
+                  inputs:
+                    PathtoPublish: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+                    ArtifactName: 'function'
+                # deploy the zip to our Azure Functions!
+                - task: AzureFunctionApp@1
+                  displayName: "Publish Azure function zip"
+                  inputs:
+                    azureSubscription: $(azureServiceConnection)
+                    appType: functionApp
+                    appName: $(functionAppName)
+                    package: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+                    deploymentMethod: 'auto'
+                    #Uncomment the next lines to deploy to a deployment slot
+                    #deployToSlotOrASE: true
+                    #resourceGroupName: '<Resource Group Name>'
+                    #slotName: '<Slot name>'

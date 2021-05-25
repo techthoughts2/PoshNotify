@@ -1,0 +1,18 @@
+# git branches to trigger build off of
+# https://docs.microsoft.com/azure/devops/pipelines/process/pipeline-triggers
+# PRs will also trigger by default
+trigger:
+  - master
+  paths:
+    exclude:
+      - README.md
+      - LICENSE
+      - .github/
+      - .vscode/
+      - docs/
+      - media/
+      - .gitignore
+
+# call shared template
+extends:
+  template: azure-pipeline-shared.yml

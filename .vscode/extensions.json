@@ -2,6 +2,7 @@
   "recommendations": [
     "ms-azuretools.vscode-azurefunctions",
     "ms-azuretools.vscode-bicep",
-    "ms-vscode.PowerShell"
+    "ms-vscode.PowerShell",
+    "ms-azure-devops.azure-pipelines"
   ]
 }

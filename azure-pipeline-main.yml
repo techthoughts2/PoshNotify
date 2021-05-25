@@ -2,7 +2,9 @@
 # https://docs.microsoft.com/azure/devops/pipelines/process/pipeline-triggers
 # PRs will also trigger by default
 trigger:
-  - master
+  branches:
+    include:
+      - master
   paths:
     exclude:
       - README.md

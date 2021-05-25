@@ -1,7 +1,9 @@
 # git branches to trigger build off of
 # https://docs.microsoft.com/azure/devops/pipelines/process/pipeline-triggers
 trigger:
-  - dev
+  branches:
+    include:
+      - dev
   paths:
     exclude:
       - README.md

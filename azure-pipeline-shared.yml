@@ -213,10 +213,88 @@ stages:
 
     jobs:
 
-      # deploy to resouce group
+      # deploy to resouce group dev
+      # only runs if condition isDev
       - deployment: Deploy
-        displayName: 'Deploying APIM Template'
-        environment: $(stageName)
+        displayName: 'Deploying APIM Template - dev'
+        condition: eq(variables.isDev, true)
+        environment: dev
+        pool:
+          name: $(poolName)
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                # create resources in the Azure subscription and resource group
+                - task: AzureResourceManagerTemplateDeployment@3
+                  displayName: 'Deploy/Update APIM - $(stageName)'
+                  inputs:
+                    deploymentScope: 'Resource Group'
+                    azureResourceManagerConnection: '$(azureServiceConnection)'
+                    subscriptionId: '$(subscriptionId)'
+                    action: 'Create Or Update Resource Group'
+                    resourceGroupName: '$(AZURE_RESOURCE_GROUP)'
+                    location: '$(geoLocation)'
+                    csmFile: '$(Pipeline.Workspace)/drop/main.json'
+                    csmParametersFile: '$(Pipeline.Workspace)/drop/parameters-$(stageName).json'
+                    deploymentMode: 'Complete'
+                    deploymentOutputs: deployment_outputs
+                # if your bicep/ARM deployment had outputs in the deployment, they can be captured here
+                - task: PowerShell@2
+                  displayName: 'ARM outputs to variables'
+                  inputs:
+                    filePath: 'parse_arm_deployment_output.ps1'
+                    arguments: '-ArmOutputString ''$(deployment_outputs)'''
+                    pwsh: true
+                # optional step that is useful for debugging to see if you got the correct outputs
+                - pwsh: |
+                    Write-Host "STORAGE_ACCOUNT_NAME: $env:STORAGE_ACCOUNT_NAME"
+                    Write-Host "KEY_VAULT_NAME: $env:KEY_VAULT_NAME"
+                    Write-Host "PLAN_NAME: $env:PLAN_NAME"
+                    Write-Host "FUNCTION_APP_NAME: $env:FUNCTION_APP_NAME"
+                    Write-Host "APP_INSIGHTS_NAME: $env:APP_INSIGHTS_NAME"
+                  env:
+                    STORAGE_ACCOUNT_NAME: $(storageAccountName)
+                    KEY_VAULT_NAME: $(keyVaultName)
+                    PLAN_NAME: $(planName)
+                    FUNCTION_APP_NAME: $(functionAppName)
+                    APP_INSIGHTS_NAME: $(appInsightsName)
+                # zip up the build artifacts. this is the zip that will become our Azure Functions!
+                - task: ArchiveFiles@2
+                  displayName: "Archive azure function files"
+                  inputs:
+                    rootFolderOrFile: src/PowerShell
+                    includeRootFolder: false
+                    archiveType: 'zip'
+                    archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+                    replaceExistingArchive: true
+                    verbose: true
+                # publish the zip
+                - task: PublishBuildArtifacts@1
+                  displayName: "Publish Azure function artifact"
+                  inputs:
+                    PathtoPublish: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+                    ArtifactName: 'function'
+                # deploy the zip to our Azure Functions!
+                - task: AzureFunctionApp@1
+                  displayName: "Publish Azure function zip"
+                  inputs:
+                    azureSubscription: $(azureServiceConnection)
+                    appType: functionApp
+                    appName: $(functionAppName)
+                    package: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+                    deploymentMethod: 'auto'
+                    #Uncomment the next lines to deploy to a deployment slot
+                    #deployToSlotOrASE: true
+                    #resourceGroupName: '<Resource Group Name>'
+                    #slotName: '<Slot name>'
+
+      # deploy to resouce group prod
+      # only runs if condition isMain
+      - deployment: Deploy
+        displayName: 'Deploying APIM Template - prod'
+        condition: eq(variables.isMain, true)
+        environment: prod
         pool:
           name: $(poolName)
         strategy:

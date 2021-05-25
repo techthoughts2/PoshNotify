@@ -207,7 +207,7 @@ stages:
 
 
   - stage: Deployment
-    displayName: Deploy to $(stageName)
+    displayName: Deploy Resources
     dependsOn: Build
     condition: succeeded()
 

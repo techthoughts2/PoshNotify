@@ -215,7 +215,7 @@ stages:
 
       # deploy to resouce group dev
       # only runs if condition isDev
-      - deployment: Deploy
+      - deployment: DeployDev
         displayName: 'Deploying APIM Template - dev'
         condition: eq(variables.isDev, true)
         environment: dev
@@ -291,7 +291,7 @@ stages:
 
       # deploy to resouce group prod
       # only runs if condition isMain
-      - deployment: Deploy
+      - deployment: DeployProd
         displayName: 'Deploying APIM Template - prod'
         condition: eq(variables.isMain, true)
         environment: prod

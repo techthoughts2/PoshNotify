@@ -665,6 +665,10 @@ resource appinsights 'Microsoft.Insights/components@2020-02-02-preview' = {
 // https://docs.microsoft.com/en-us/azure/templates/microsoft.authorization/roleassignments?tabs=bicep
 resource storageAccountReadPermission 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
   name: guid(projectName, 'storageAccountReadPermission', uniqueResourceNameBase_var, subscription().subscriptionId)
+  dependsOn: [
+    storageaccount
+    functionapp
+  ]
   scope: storageaccount
   properties: {
     roleDefinitionId: '${subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'c12c1c16-33a1-487b-954d-41c89c60f349')}'
@@ -683,6 +687,11 @@ resource storageAccountReadPermission 'Microsoft.Authorization/roleAssignments@2
 // https://docs.microsoft.com/en-us/azure/templates/microsoft.authorization/roleassignments?tabs=bicep
 resource containerPermission 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
   name: guid(projectName, uniqueResourceNameBase_var, subscription().subscriptionId)
+  dependsOn: [
+    storageaccount
+    functionapp
+    container
+  ]
   scope: container
   properties: {
     roleDefinitionId: '${subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')}'

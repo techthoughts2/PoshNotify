@@ -205,17 +205,16 @@ stages:
               PathtoPublish: '$(build.artifactstagingdirectory)'
               ArtifactName: 'drop'
 
-
-  - stage: Deployment
-    displayName: Deploy Resources
+  # deploy to dev - only runs if isDev is true
+  - stage: DeploymentDev
+    displayName: Deploy Resources - dev
     dependsOn: Build
-    condition: succeeded()
+    condition: and(succeeded(), eq(variables.isDev, true))
 
     jobs:
 
       # deploy to resouce group dev
-      # only runs if condition isDev
-      - deployment: DeployDev
+      - deployment: Deploy
         displayName: 'Deploying APIM Template - dev'
         condition: eq(variables.isDev, true)
         environment: dev
@@ -289,9 +288,15 @@ stages:
                     #resourceGroupName: '<Resource Group Name>'
                     #slotName: '<Slot name>'
 
+  # deploy to prod - only runs if isMain is true
+  - stage: Deployment-prod
+    displayName: Deploy Resources - prod
+    dependsOn: Build
+    condition: and(succeeded(), eq(variables.isMain, true))
+
+    jobs:
       # deploy to resouce group prod
-      # only runs if condition isMain
-      - deployment: DeployProd
+      - deployment: Deploy
         displayName: 'Deploying APIM Template - prod'
         condition: eq(variables.isMain, true)
         environment: prod

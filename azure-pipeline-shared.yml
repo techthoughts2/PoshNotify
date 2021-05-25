@@ -3,7 +3,7 @@
 # Learn Pipeline Key Concepts:
 # https://docs.microsoft.com/azure/devops/pipelines/get-started/key-pipelines-concepts
 
-name: 'PoshNotify Build and Deploy Pipeline'
+# name: 'PoshNotify Build and Deploy Pipeline'
 
 variables:
   # vmImageName: 'ubuntu-latest' # use if you want to build using a MS agent

@@ -289,7 +289,7 @@ stages:
                     #slotName: '<Slot name>'
 
   # deploy to prod - only runs if isMain is true
-  - stage: Deployment-prod
+  - stage: DeploymentProd
     displayName: Deploy Resources - prod
     dependsOn: Build
     condition: and(succeeded(), eq(variables.isMain, true))

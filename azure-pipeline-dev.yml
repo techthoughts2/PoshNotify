@@ -4,14 +4,14 @@ trigger:
   branches:
     include:
       - dev
-  exclude:
-    - README.md
-    - LICENSE
-    - .github/
-    - .vscode/
-    - docs/
-    - media/
-    - .gitignore
+    exclude:
+      - README.md
+      - LICENSE
+      - .github/
+      - .vscode/
+      - docs/
+      - media/
+      - .gitignore
 
 # Do not trigger builds on PRs
 pr: none

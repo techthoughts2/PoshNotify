@@ -63,7 +63,7 @@ function Get-BlobVersionInfo {
     }
     catch {
         Write-Error $_
-        Send-TelegramError -ErrorMessage '\\\ Project PoshNotify - Get-BlobVersionInfo could not retrieve blob successfully.'
+        Send-TelegramError -ErrorMessage 'Get-BlobVersionInfo could not retrieve blob successfully.'
         return $result
     }
 
@@ -73,7 +73,7 @@ function Get-BlobVersionInfo {
     }
     catch {
         Write-Error $_
-        Send-TelegramError -ErrorMessage '\\\ Project PoshNotify - Get-BlobVersionInfo encountered an error sourcing file info from disk.'
+        Send-TelegramError -ErrorMessage 'Get-BlobVersionInfo encountered an error sourcing file info from disk.'
         return $result
     }
 

@@ -30,7 +30,7 @@ function Get-PowerShellBlogInfo {
     }
     catch {
         Write-Error $_
-        Send-TelegramError -ErrorMessage '\\\ Project PoshNotify - Get-PowerShellBlogInfo could not retrieve rss info from PowerShell blog.'
+        Send-TelegramError -ErrorMessage 'Get-PowerShellBlogInfo could not retrieve rss info from PowerShell blog.'
         return $null
     }
 

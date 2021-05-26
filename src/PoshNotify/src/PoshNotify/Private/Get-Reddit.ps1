@@ -50,7 +50,7 @@ function Get-Reddit {
     }
     catch {
         Write-Error $_
-        Send-TelegramError -ErrorMessage '\\\ Project PoshNotify - Get-Reddit encountered an error retrieving reddit information.'
+        Send-TelegramError -ErrorMessage 'Get-Reddit encountered an error retrieving reddit information.'
         $results = $false
         return $results
     }

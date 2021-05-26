@@ -159,7 +159,7 @@ function Send-SlackMessage {
         Write-Verbose -Message 'Slack message SENT!'
     }
     catch {
-        Send-TelegramError -ErrorMessage '\\\ Project PoshNotify - Send-SlackMessage to Slack went wrong.'
+        Send-TelegramError -ErrorMessage 'Send-SlackMessage to Slack went wrong.'
         Write-Error $_
     }
 } #Send-SlackMessage

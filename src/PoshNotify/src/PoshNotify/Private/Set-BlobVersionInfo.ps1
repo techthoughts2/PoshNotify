@@ -77,7 +77,7 @@ function Set-BlobVersionInfo {
             Write-Verbose -Message ('Confirming {0} exists' -f $File)
             if (-not(Test-Path $file)) {
                 Write-Warning -Message ('{0} was not found.' -f $file)
-                Send-TelegramError -ErrorMessage '\\\ Project PoshNotify - Set-BlobVersionInfo the file was not found.'
+                Send-TelegramError -ErrorMessage 'Set-BlobVersionInfo the file was not found.'
                 return $result
             }
             else {
@@ -100,7 +100,7 @@ function Set-BlobVersionInfo {
             }
             catch {
                 Write-Error $_
-                Send-TelegramError -ErrorMessage '\\\ Project PoshNotify - Set-BlobVersionInfo an error was encountered uploading the blob.'
+                Send-TelegramError -ErrorMessage 'Set-BlobVersionInfo an error was encountered uploading the blob.'
                 return $result
             }
 

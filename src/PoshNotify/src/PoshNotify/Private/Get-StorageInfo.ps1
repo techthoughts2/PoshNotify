@@ -32,13 +32,13 @@ function Get-StorageInfo {
     }
     catch {
         Write-Error $_
-        Send-TelegramError -ErrorMessage '\\\ Project PoshNotify - Get-StorageInfo did not find the storage account successfully.'
+        Send-TelegramError -ErrorMessage 'Get-StorageInfo did not find the storage account successfully.'
         return $storageAcc
     }
 
     if ($null -eq $storageAcc) {
         Write-Verbose -Message 'No storage account found.'
-        Send-TelegramError -ErrorMessage '\\\ Project PoshNotify - Get-StorageInfo no storage account info was returned.'
+        Send-TelegramError -ErrorMessage 'Get-StorageInfo no storage account info was returned.'
         return $storageAcc
     }
 

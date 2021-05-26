@@ -37,7 +37,7 @@ function Get-PowerShellReleaseInfo {
     }
     catch {
         Write-Error $_
-        Send-TelegramError -ErrorMessage '\\\ Project PoshNotify - Get-PowerShellReleaseInfo could not retrieve release info from PowerShell Github.'
+        Send-TelegramError -ErrorMessage 'Get-PowerShellReleaseInfo could not retrieve release info from PowerShell Github.'
         return $null
     }
 

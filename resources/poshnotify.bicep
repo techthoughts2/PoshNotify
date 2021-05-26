@@ -625,6 +625,7 @@ resource functionapp 'Microsoft.Web/sites@2020-12-01' = {
       'CONTAINER_NAME': container.name
       'RESOURCE_GROUP': '${projectName}-${environmentType}'
       'STORAGE_ACCOUNT_NAME': storageaccount.name
+      'STAGE': environmentType
     }
   }
 }

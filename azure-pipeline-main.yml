@@ -5,15 +5,14 @@ trigger:
   branches:
     include:
       - main
-  paths:
     exclude:
-      - README.md
-      - LICENSE
-      - .github/
-      - .vscode/
-      - docs/
-      - media/
-      - .gitignore
+      - 'README.md'
+      - 'LICENSE'
+      - '.github/'
+      - '.vscode/'
+      - 'docs/'
+      - 'media/'
+      - '.gitignore'
 
 # call shared template
 extends:

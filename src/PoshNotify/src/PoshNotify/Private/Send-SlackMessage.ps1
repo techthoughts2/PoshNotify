@@ -76,7 +76,7 @@ function Send-SlackMessage {
             "type": "header",
             "text": {
                 "type": "plain_text",
-                "text": "$Text",
+                "text": "$Title",
                 "emoji": true
             }
         },
@@ -84,13 +84,13 @@ function Send-SlackMessage {
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": "$Title"
+                "text": "$Text"
             },
             "accessory": {
                 "type": "button",
                 "text": {
                     "type": "plain_text",
-                    "text": $actionText,
+                    "text": "$actionText",
                     "emoji": true
                 },
                 "value": "click_me_123",

@@ -58,6 +58,12 @@ function Send-SlackMessage {
     )
 
     if ($MessageType -eq 'PowerShellVersion' -or $MessageType -eq 'PowerShellBlog') {
+
+        # properly escape characters for json payload
+        $text = $text | ConvertTo-Json
+        $text = $text.Substring(0, $text.Length - 1)
+        $text = $text.Substring(1)
+
         switch ($MessageType) {
             PowerShellVersion {
                 $actionText = 'Get this version'
@@ -106,6 +112,13 @@ function Send-SlackMessage {
 "@
     }
     else {
+        for ($i = 0; $i -lt $RedditObj.Count - 1; $i++) {
+            $title = $RedditObj[$i].Title
+            $title = $title | ConvertTo-Json
+            $title = $title.Substring(0, $title.Length - 1)
+            $title = $title.Substring(1)
+            $RedditObj[$i].Title = $title
+        }
         $post1 = $RedditObj[0].Title
         $url1 = $($RedditObj[0].URL)
         $post2 = $RedditObj[1].Title

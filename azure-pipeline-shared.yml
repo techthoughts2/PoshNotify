@@ -33,7 +33,7 @@ stages:
       - job: PowerShellVariableOut
         displayName: PowerShell Variable Outputs
         pool:
-          name: $(poolName) # name of the pool to run this job in
+          vmImage: 'windows-latest' # name of the pool to run this job in
           workspace:
             clean: all
         steps:
@@ -52,7 +52,7 @@ stages:
               Write-Host "Artifacts Directory: $env:ARTIFACTS_DIRECTORY"
               Write-Host "Pipeline Workspace: $env:PIPELINE_WORKSPACE"
             env:
-              POOL_NAME: $(poolName)
+              POOL_vmImage: 'windows-latest'
               PROJECT_NAME: $(projectName)
               BUILD_SOURCEBRANCHNAME: $(Build.SourceBranchName)
               AZURE_SERVICE_CONNECTION: $(azureServiceConnection)
@@ -71,7 +71,7 @@ stages:
       - job: InstallModules
         displayName: Install PowerShell Modules
         pool:
-          name: $(poolName) # name of the pool to run this job in
+          vmImage: 'windows-latest' # name of the pool to run this job in
         steps:
           - pwsh: |
               Install-Module -Name InvokeBuild -Repository PSGallery -SkipPublisherCheck -Force
@@ -90,7 +90,7 @@ stages:
       - job: InvokeBuild
         displayName: Invoke-Build PoshNotify
         pool:
-          name: $(poolName)  # name of the pool to run this job in
+          vmImage: 'windows-latest'  # name of the pool to run this job in
         steps:
           # analyze the module for violations and build
           - pwsh: |
@@ -139,7 +139,7 @@ stages:
       - job: Build
         displayName: Validate, Copy, and Publish
         pool:
-          name: $(poolName)
+          vmImage: 'windows-latest'
 
         steps:
           # download the PowerShell module we built in the previous stage of the pipeline
@@ -219,7 +219,7 @@ stages:
         condition: eq(variables.isDev, true)
         environment: dev
         pool:
-          name: $(poolName)
+          vmImage: 'windows-latest'
         strategy:
           runOnce:
             deploy:
@@ -301,7 +301,7 @@ stages:
         condition: eq(variables.isMain, true)
         environment: prod
         pool:
-          name: $(poolName)
+          vmImage: 'windows-latest'
         strategy:
           runOnce:
             deploy:

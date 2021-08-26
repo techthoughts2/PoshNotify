@@ -7,7 +7,7 @@
 
 variables:
   # vmImageName: 'ubuntu-latest' # use if you want to build using a MS agent
-  poolName: 'SelfHostedPool' # use if you are running your own agent
+  # poolName: 'SelfHostedPool' # use if you are running your own agent
   projectName: 'PoshNotify' # name of project
   azureServiceConnection: 'PoshNotify-ServiceConnection' # service connection is set up inside Azure DevOps
   subscriptionId: '$(subscriptionIDP)' # azure subscription ID that you want to deploy to

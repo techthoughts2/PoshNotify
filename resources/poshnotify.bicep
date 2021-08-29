@@ -725,7 +725,7 @@ resource containerPermission 'Microsoft.Authorization/roleAssignments@2020-04-01
 // 0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3 - Storage Table Data Contributor
 // Allows for read, write and delete access to Azure Storage tables and entities
 // https://docs.microsoft.com/en-us/azure/templates/microsoft.authorization/roleassignments?tabs=bicep
-resource versiontablePermission 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
+resource versiontablePermission 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
   name: guid(projectName, uniqueResourceNameBase_var, subscription().subscriptionId)
   scope: versiontable
   properties: {

@@ -151,6 +151,7 @@ resource storageaccount 'Microsoft.Storage/storageaccounts@2021-02-01' = {
     //   isNfsV3Enabled: bool
   }
   // https://docs.microsoft.com/en-us/azure/templates/microsoft.storage/storageaccounts/blobservices/containers?tabs=bicep
+  // https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/child-resource-name-type
   resource blobcontainer 'blobServices' = {
     name: 'default'
     dependsOn: [
@@ -165,6 +166,7 @@ resource storageaccount 'Microsoft.Storage/storageaccounts@2021-02-01' = {
     // resources: []
   }
   // https://docs.microsoft.com/en-us/azure/templates/microsoft.storage/storageaccounts/tableservices?tabs=bicep
+  // https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/child-resource-name-type
   resource tableService 'tableServices' = {
     name: 'default'
     dependsOn: [
@@ -273,6 +275,7 @@ resource keyvault 'Microsoft.KeyVault/vaults@2019-09-01' = {
     //   }
   }
   // https://docs.microsoft.com/en-us/azure/templates/microsoft.keyvault/vaults/secrets?tabs=bicep
+  // https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/child-resource-name-type
   resource storageSecret 'secrets' = {
     name: 'sa-connectionstring'
     properties: {
@@ -636,6 +639,8 @@ resource functionapp 'Microsoft.Web/sites@2020-12-01' = {
 
   // https://docs.microsoft.com/en-us/azure/templates/microsoft.web/sites/config-appsettings?tabs=bicep
   // https://docs.microsoft.com/en-us/azure/azure-functions/functions-app-settings
+  // https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/child-resource-name-type
+    // connection string references child resource secret from keyvault
   resource functionSettings 'config' = {
     name: 'appsettings'
     dependsOn: [
@@ -650,6 +655,7 @@ resource functionapp 'Microsoft.Web/sites@2020-12-01' = {
       'AzureWebJobsStorage': 'DefaultEndpointsProtocol=https;AccountName=${storageaccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageaccount.id, storageaccount.apiVersion).keys[0].value}'
       'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING': 'DefaultEndpointsProtocol=https;AccountName=${storageaccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageaccount.id, storageaccount.apiVersion).keys[0].value}'
       'WEBSITE_CONTENTSHARE': functionapp.name
+      'SA_CONNECTION_STRING': '@Microsoft.KeyVault(SecretUri=https://${keyvault.name}.vault.azure.net/secrets/${keyvault::storageSecret.name}/)'
       'SLACK_ENDPOINT': '@Microsoft.KeyVault(SecretUri=https://${keyvault.name}.vault.azure.net/secrets/slack-${environmentType}/)'
       'TOKEN': '@Microsoft.KeyVault(SecretUri=https://${keyvault.name}.vault.azure.net/secrets/tttoken/)'
       'CHANNEL': '@Microsoft.KeyVault(SecretUri=https://${keyvault.name}.vault.azure.net/secrets/ttchannel/)'

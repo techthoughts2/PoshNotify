@@ -93,5 +93,5 @@ output saPermID string = PoshNotifyResources.outputs.saPermID
 output conPermName string = PoshNotifyResources.outputs.conPermName
 output conPermID string = PoshNotifyResources.outputs.conPermID
 
-output tablePermName string = PoshNotifyResources.outputs.tablePermName
-output tablePermID string = PoshNotifyResources.outputs.tablePermID
+// output tablePermName string = PoshNotifyResources.outputs.tablePermName
+// output tablePermID string = PoshNotifyResources.outputs.tablePermID

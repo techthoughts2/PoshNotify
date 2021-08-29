@@ -273,6 +273,12 @@ resource keyvault 'Microsoft.KeyVault/vaults@2019-09-01' = {
     //   }
   }
   // https://docs.microsoft.com/en-us/azure/templates/microsoft.keyvault/vaults/secrets?tabs=bicep
+  resource storageSecret 'secrets' = {
+    name: 'sa-connectionstring'
+    properties: {
+      value: 'DefaultEndpointsProtocol=https;AccountName=${storageaccount.name};AccountKey=${listKeys(storageaccount.id, storageaccount.apiVersion).keys[1].value}'
+    }
+  }
   // resource slackSecret 'secrets' = {
   //   name: secretName
   //   tags: {
@@ -725,19 +731,19 @@ resource containerPermission 'Microsoft.Authorization/roleAssignments@2020-04-01
 // 0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3 - Storage Table Data Contributor
 // Allows for read, write and delete access to Azure Storage tables and entities
 // https://docs.microsoft.com/en-us/azure/templates/microsoft.authorization/roleassignments?tabs=bicep
-resource versiontablePermission 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
-  name: guid(projectName, uniqueResourceNameBase_var, subscription().subscriptionId)
-  scope: versiontable
-  properties: {
-    roleDefinitionId: '${subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3')}'
-    principalId: reference(functionapp.id, '2019-08-01', 'full').identity.principalId
-    // principalType: 'string'
-    // description: 'string'
-    // condition: 'string'
-    // conditionVersion: 'string'
-    // delegatedManagedIdentityResourceId: 'string'
-  }
-}
+// resource versiontablePermission 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+//   name: guid(projectName, uniqueResourceNameBase_var, subscription().subscriptionId)
+//   scope: versiontable
+//   properties: {
+//     roleDefinitionId: '${subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3')}'
+//     principalId: reference(functionapp.id, '2019-08-01', 'full').identity.principalId
+//     // principalType: 'string'
+//     // description: 'string'
+//     // condition: 'string'
+//     // conditionVersion: 'string'
+//     // delegatedManagedIdentityResourceId: 'string'
+//   }
+// }
 
 // ---------
 // Outputs
@@ -771,5 +777,5 @@ output saPermID string = storageAccountReadPermission.id
 output conPermName string = containerPermission.name
 output conPermID string = containerPermission.id
 
-output tablePermName string = versiontablePermission.name
-output tablePermID string = versiontablePermission.id
+// output tablePermName string = versiontablePermission.name
+// output tablePermID string = versiontablePermission.id

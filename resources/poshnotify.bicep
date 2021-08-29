@@ -181,6 +181,29 @@ resource container 'Microsoft.Storage/storageAccounts/blobServices/containers@20
   // resources: []
 }
 
+// https://docs.microsoft.com/en-us/azure/templates/microsoft.storage/storageaccounts/tableservices?tabs=bicep
+resource tableService 'Microsoft.Storage/storageAccounts/tableServices@2021-04-01' = {
+  name: '${storageaccount.name}/${projectContainer}'
+  properties: {
+    // cors: {
+    //   corsRules: [
+    //     {
+    //       allowedHeaders: [ 'string' ]
+    //       allowedMethods: [ 'string' ]
+    //       allowedOrigins: [ 'string' ]
+    //       exposedHeaders: [ 'string' ]
+    //       maxAgeInSeconds: int
+    //     }
+    //   ]
+    // }
+  }
+}
+
+// https://docs.microsoft.com/en-us/azure/templates/microsoft.storage/storageaccounts/tableservices/tables?tabs=bicep
+resource versiontable 'Microsoft.Storage/storageAccounts/tableServices/tables@2021-04-01' = {
+  name: '${storageaccount.name}/${projectContainer}/versiontable'
+}
+
 // https://docs.microsoft.com/en-us/azure/templates/microsoft.keyvault/vaults?tabs=bicep
 resource keyvault 'Microsoft.KeyVault/vaults@2019-09-01' = {
   name: 'keyvault-${uniqueResourceNameBase_var}'
@@ -696,6 +719,24 @@ resource containerPermission 'Microsoft.Authorization/roleAssignments@2020-04-01
   }
 }
 
+// b24988ac-6180-42a0-ab88-20f7382dd24c - Contributor
+// 0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3 - Storage Table Data Contributor
+// Allows for read, write and delete access to Azure Storage tables and entities
+// https://docs.microsoft.com/en-us/azure/templates/microsoft.authorization/roleassignments?tabs=bicep
+resource versiontablePermission 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
+  name: guid(projectName, uniqueResourceNameBase_var, subscription().subscriptionId)
+  scope: versiontable
+  properties: {
+    roleDefinitionId: '${subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3')}'
+    principalId: reference(functionapp.id, '2019-08-01', 'full').identity.principalId
+    // principalType: 'string'
+    // description: 'string'
+    // condition: 'string'
+    // conditionVersion: 'string'
+    // delegatedManagedIdentityResourceId: 'string'
+  }
+}
+
 // ---------
 // Outputs
 // ---------
@@ -705,6 +746,9 @@ output storageAccountID string = storageaccount.id
 
 output containerName string = container.name
 output containerID string = container.id
+
+output tableName string = versiontable.name
+output tableID string = versiontable.id
 
 output keyVaultName string = keyvault.name
 output keyVaultID string = keyvault.id
@@ -724,3 +768,6 @@ output saPermID string = storageAccountReadPermission.id
 
 output conPermName string = containerPermission.name
 output conPermID string = containerPermission.id
+
+output tablePermName string = versiontablePermission.name
+output tablePermID string = versiontablePermission.id

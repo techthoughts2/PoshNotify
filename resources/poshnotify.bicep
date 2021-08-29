@@ -164,6 +164,26 @@ resource storageaccount 'Microsoft.Storage/storageaccounts@2021-02-01' = {
     }
     // resources: []
   }
+  // https://docs.microsoft.com/en-us/azure/templates/microsoft.storage/storageaccounts/tableservices?tabs=bicep
+  resource tableService 'tableServices' = {
+    name: 'default'
+    dependsOn: [
+      storageaccount
+    ]
+    properties: {
+      // cors: {
+      //   corsRules: [
+      //     {
+      //       allowedHeaders: [ 'string' ]
+      //       allowedMethods: [ 'string' ]
+      //       allowedOrigins: [ 'string' ]
+      //       exposedHeaders: [ 'string' ]
+      //       maxAgeInSeconds: int
+      //     }
+      //   ]
+      // }
+    }
+  }
 }
 
 // https://docs.microsoft.com/en-us/azure/templates/microsoft.storage/storageaccounts/blobservices/containers?tabs=bicep
@@ -181,27 +201,9 @@ resource container 'Microsoft.Storage/storageAccounts/blobServices/containers@20
   // resources: []
 }
 
-// https://docs.microsoft.com/en-us/azure/templates/microsoft.storage/storageaccounts/tableservices?tabs=bicep
-resource tableService 'Microsoft.Storage/storageAccounts/tableServices@2021-04-01' = {
-  name: '${storageaccount.name}/${projectContainer}'
-  properties: {
-    // cors: {
-    //   corsRules: [
-    //     {
-    //       allowedHeaders: [ 'string' ]
-    //       allowedMethods: [ 'string' ]
-    //       allowedOrigins: [ 'string' ]
-    //       exposedHeaders: [ 'string' ]
-    //       maxAgeInSeconds: int
-    //     }
-    //   ]
-    // }
-  }
-}
-
 // https://docs.microsoft.com/en-us/azure/templates/microsoft.storage/storageaccounts/tableservices/tables?tabs=bicep
 resource versiontable 'Microsoft.Storage/storageAccounts/tableServices/tables@2021-04-01' = {
-  name: '${storageaccount.name}/${projectContainer}/versiontable'
+  name: '${storageaccount.name}/default/versiontable'
 }
 
 // https://docs.microsoft.com/en-us/azure/templates/microsoft.keyvault/vaults?tabs=bicep

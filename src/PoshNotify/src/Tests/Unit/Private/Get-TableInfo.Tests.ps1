@@ -9,6 +9,7 @@ if (Get-Module -Name $ModuleName -ErrorAction 'SilentlyContinue') {
     Remove-Module -Name $ModuleName -Force
 }
 Import-Module $PathToManifest -Force
+Import-Module 'Az.Storage' -Force
 
 InModuleScope 'PoshNotify' {
     #-------------------------------------------------------------------------
@@ -20,36 +21,39 @@ InModuleScope 'PoshNotify' {
     }
     function Send-TelegramError {
     }
-    Context 'Get-PowerShellBlogInfo' {
+    Context 'Get-TableInfo' {
         BeforeEach {
-            Mock -CommandName Invoke-RestMethod -MockWith {
+            $context = [Microsoft.WindowsAzure.Commands.Common.Storage.AzureStorageContext]::EmptyContextInstance
+            $env:TABLE_NAME = 'tableName'
+
+            Mock -CommandName Get-AzStorageTable -MockWith {
                 [PSCustomObject]@{
-                    title       = 'Announcing PlatyPS 2.0.0-Preview1'
-                    link        = 'https://devblogs.microsoft.com/powershell/announcing-platyps-2-0-0-preview1/'
-                    comments    = '{https://devblogs.microsoft.com/powershell/announcing-platyps-2-0-0-preview1/#respond, 0}'
-                    creator     = 'creator'
-                    pubDate     = 'Thu, 20 May 2021 19:08:32 +0000'
-                    category    = '{category, category}'
-                    guid        = 'guid'
-                    description = 'description'
-                    encoded     = 'encoded'
-                    commentRss  = 'https://devblogs.microsoft.com/powershell/announcing-platyps-2-0-0-preview1/feed/'
+                    CloudTable = 'tableName'
+                    Uri        = 'https://xxxxxxxxx.table.core.windows.net/tableName'
+                    Context    = 'Microsoft.WindowsAzure.Commands.Storage.AzureStorageContext'
+                    Name       = 'tableName'
                 }
             } #endMock
         } #beforeeach
         Context 'Error' {
-            It 'should return null if an error is encountered getting PowerShell blog rss info' {
-                Mock -CommandName Invoke-RestMethod -MockWith {
+            It 'should return null if an error is encountered getting storage account context' {
+                Mock -CommandName Get-AzStorageTable -MockWith {
                     throw 'FakeError'
                 } #endMock
-                Get-PowerShellBlogInfo | Should -BeNullOrEmpty
+                Get-TableInfo -StorageContext $context | Should -BeNullOrEmpty
+            } #it
+            It 'should return null if no storage account info is returned' {
+                Mock -CommandName Get-AzStorageTable -MockWith {
+                    $null
+                } #endMock
+                Get-TableInfo -StorageContext $context | Should -BeNullOrEmpty
             } #it
         } #context-error
         Context 'Success' {
             It 'should return expected results if successful' {
-                $eval = Get-PowerShellBlogInfo
-                $eval.Title | Should -BeExactly 'Announcing PlatyPS 2.0.0-Preview1'
-                $eval.Link | Should -BeExactly 'https://devblogs.microsoft.com/powershell/announcing-platyps-2-0-0-preview1/'
+                $eval = Get-TableInfo -StorageContext $context
+                $eval.CloudTable | Should -BeExactly 'tableName'
+                $eval.Name | Should -BeExactly 'tableName'
             } #it
         } #context-success
     } #context

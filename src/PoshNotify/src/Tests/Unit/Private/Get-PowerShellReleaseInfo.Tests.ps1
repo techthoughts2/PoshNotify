@@ -9,43 +9,43 @@ if (Get-Module -Name $ModuleName -ErrorAction 'SilentlyContinue') {
     Remove-Module -Name $ModuleName -Force
 }
 Import-Module $PathToManifest -Force
-#-------------------------------------------------------------------------
-$WarningPreference = 'SilentlyContinue'
-#-------------------------------------------------------------------------
-#Import-Module $moduleNamePath -Force
 
 InModuleScope 'PoshNotify' {
     #-------------------------------------------------------------------------
     $WarningPreference = 'SilentlyContinue'
-    $ErrorActionPreference = 'SilentlyContinue'
     #-------------------------------------------------------------------------
+    BeforeAll {
+        $WarningPreference = 'SilentlyContinue'
+        $ErrorActionPreference = 'SilentlyContinue'
+    }
     function Send-TelegramError {
     }
-    $releaseInfo = [System.Collections.ArrayList]@()
-    $obj1 = [PSCustomObject]@{
-        id        = 'tag:github.com,2008:Repository/49609581/v7.2.0-preview.5'
-        updated   = '2021-04-14T23:57:25Z'
-        link      = 'link'
-        title     = 'v7.2.0-preview.5 Release of PowerShell'
-        content   = 'content'
-        author    = 'author'
-        thumbnail = 'thumbnail'
-    }
-    $obj2 = [PSCustomObject]@{
-        id        = 'tag:github.com,2008:Repository/49609581/v7.1.3'
-        updated   = '2021-03-11T23:29:58Z'
-        link      = 'link'
-        title     = 'v7.1.3 Release of PowerShell'
-        content   = 'content'
-        author    = 'author'
-        thumbnail = 'thumbnail'
-    }
-
-    $releaseInfo.Add($obj1) | Out-Null
-    $releaseInfo.Add($obj2) | Out-Null
 
     Context 'Get-PowerShellReleaseInfo' {
         BeforeEach {
+            $releaseInfo = [System.Collections.ArrayList]@()
+            $obj1 = [PSCustomObject]@{
+                id        = 'tag:github.com,2008:Repository/49609581/v7.2.0-preview.5'
+                updated   = '2021-04-14T23:57:25Z'
+                link      = 'link'
+                title     = 'v7.2.0-preview.5 Release of PowerShell'
+                content   = 'content'
+                author    = 'author'
+                thumbnail = 'thumbnail'
+            }
+            $obj2 = [PSCustomObject]@{
+                id        = 'tag:github.com,2008:Repository/49609581/v7.1.3'
+                updated   = '2021-03-11T23:29:58Z'
+                link      = 'link'
+                title     = 'v7.1.3 Release of PowerShell'
+                content   = 'content'
+                author    = 'author'
+                thumbnail = 'thumbnail'
+            }
+
+            $releaseInfo.Add($obj1) | Out-Null
+            $releaseInfo.Add($obj2) | Out-Null
+
             Mock -CommandName Invoke-RestMethod -MockWith {
                 $releaseInfo
             } #endMock

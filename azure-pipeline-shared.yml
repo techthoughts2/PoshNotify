@@ -98,7 +98,7 @@ stages:
             env:
               WORKING_DIRECTORY: $(System.DefaultWorkingDirectory)
           # Pester test the module - generate test result file and code coverage file
-          - task: Pester@9
+          - task: Pester@10
             inputs:
               scriptFolder: '$(System.DefaultWorkingDirectory)\src\PoshNotify\src\Tests\*'
               resultsFile: '$(System.DefaultWorkingDirectory)\Test-Pester.XML'
@@ -106,7 +106,7 @@ stages:
               CodeCoverageFolder: '$(System.DefaultWorkingDirectory)\src\PoshNotify\src\PoshNotify'
               usePSCore: true
               PesterVersion: 'OtherVersion'
-              preferredPesterVersion: '4.10.1'
+              preferredPesterVersion: '5.3.0'
               failOnStdErr: false
           # publish the test results for pretty graphs in Azure DevOps
           - task: PublishTestResults@2

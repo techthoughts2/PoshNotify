@@ -9,16 +9,15 @@ if (Get-Module -Name $ModuleName -ErrorAction 'SilentlyContinue') {
     Remove-Module -Name $ModuleName -Force
 }
 Import-Module $PathToManifest -Force
-#-------------------------------------------------------------------------
-$WarningPreference = 'SilentlyContinue'
-#-------------------------------------------------------------------------
-#Import-Module $moduleNamePath -Force
 
 InModuleScope 'PoshNotify' {
     #-------------------------------------------------------------------------
     $WarningPreference = 'SilentlyContinue'
-    $ErrorActionPreference = 'SilentlyContinue'
     #-------------------------------------------------------------------------
+    BeforeAll {
+        $WarningPreference = 'SilentlyContinue'
+        $ErrorActionPreference = 'SilentlyContinue'
+    }
     Context 'Start-PowerShellCheck' {
         function Send-SlackMessage {
         }
@@ -57,38 +56,40 @@ InModuleScope 'PoshNotify' {
             } #endMock
         } #beforeeach
         Context 'ShouldProcess' {
-            Mock -CommandName Start-PowerShellCheck -MockWith { } #endMock
+            BeforeEach {
+                Mock -CommandName Start-PowerShellCheck -MockWith { } #endMock
+            } #beforeEach
             It 'Should process by default' {
                 Start-PowerShellCheck
                 Assert-MockCalled Start-PowerShellCheck -Scope It -Exactly -Times 1
-            }#it
+            } #it
             It 'Should not process on explicit request for confirmation (-Confirm)' {
                 { Start-PowerShellCheck }
                 Assert-MockCalled Start-PowerShellCheck -Scope It -Exactly -Times 0
-            }#it
+            } #it
             It 'Should not process on implicit request for confirmation (ConfirmPreference)' {
                 {
                     $ConfirmPreference = 'Medium'
                     Start-PowerShellCheck
                 }
                 Assert-MockCalled Start-PowerShellCheck -Scope It -Exactly -Times 0
-            }#it
+            } #it
             It 'Should not process on explicit request for validation (-WhatIf)' {
                 { Start-PowerShellCheck }
                 Assert-MockCalled Start-PowerShellCheck -Scope It -Exactly -Times 0
-            }#it
+            } #it
             It 'Should not process on implicit request for validation (WhatIfPreference)' {
                 {
                     $WhatIfPreference = $true
                     Start-PowerShellCheck
                 }
                 Assert-MockCalled Start-PowerShellCheck -Scope It -Exactly -Times 0
-            }#it
+            } #it
             It 'Should process on force' {
                 $ConfirmPreference = 'Medium'
                 Start-PowerShellCheck
                 Assert-MockCalled Start-PowerShellCheck -Scope It -Exactly -Times 1
-            }#it
+            } #it
         } #context
         Context 'Error' {
             It 'should return false if no Powershell version information is found' {
@@ -123,7 +124,7 @@ InModuleScope 'PoshNotify' {
         } #context-error
         Context 'Success' {
             It 'should not throw if a new version is not discovered' {
-                { Start-PowerShellCheck } | Should Not Throw
+                { Start-PowerShellCheck } | Should -Not -Throw
             } #it
             It 'should not send slack messages if a new version is not discovered' {
                 Start-PowerShellCheck
@@ -145,7 +146,7 @@ InModuleScope 'PoshNotify' {
                         PwshLink     = 'https://github.com/PowerShell/PowerShell/releases/tag/v7.2.3'
                     }
                 } #endMock
-                { Start-PowerShellCheck } | Should Not Throw
+                { Start-PowerShellCheck } | Should -Not -Throw
             } #it
             It 'should send slack messages if a new version is discovered' {
                 Mock -CommandName Get-PowerShellReleaseInfo -MockWith {
@@ -181,7 +182,7 @@ InModuleScope 'PoshNotify' {
                 Mock -CommandName Get-BlobVersionInfo -MockWith {
                     $false
                 } #endMock
-                { Start-PowerShellCheck } | Should Not Throw
+                { Start-PowerShellCheck } | Should -Not -Throw
             } #it
             It 'should return true if no issues are encountered' {
                 Mock -CommandName Get-BlobVersionInfo -MockWith {

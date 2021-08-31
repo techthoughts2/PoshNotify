@@ -52,7 +52,7 @@ function Send-SlackMessage {
         [ValidateSet('PowerShellVersion', 'PowerShellBlog', 'PowerShellReddit')]
         [string]$MessageType,
         [Parameter(Mandatory = $false,
-            HelpMessage = 'TBD')]
+            HelpMessage = 'PoshNotify')]
         [ValidateNotNullOrEmpty()]
         [psobject]$RedditObj
     )

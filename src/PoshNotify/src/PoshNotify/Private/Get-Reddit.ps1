@@ -79,12 +79,12 @@ function Get-Reddit {
             }
             $results.Add($obj) | Out-Null
         }
-    }#if_rawReddit
+    } #if_rawReddit
     else {
         $results = $false
         Write-Warning -Message 'No information was returned from reddit.'
         return $results
-    }#else_rawReddit
+    } #else_rawReddit
 
     return $results
 

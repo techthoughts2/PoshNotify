@@ -10,24 +10,24 @@ if (Get-Module -Name $ModuleName -ErrorAction 'SilentlyContinue') {
 }
 Import-Module $PathToManifest -Force
 Import-Module 'Az.Storage'
-#-------------------------------------------------------------------------
-$WarningPreference = 'SilentlyContinue'
-#-------------------------------------------------------------------------
-#Import-Module $moduleNamePath -Force
 
 InModuleScope 'PoshNotify' {
     #-------------------------------------------------------------------------
     $WarningPreference = 'SilentlyContinue'
-    $ErrorActionPreference = 'SilentlyContinue'
     #-------------------------------------------------------------------------
+    BeforeAll {
+        $WarningPreference = 'SilentlyContinue'
+        $ErrorActionPreference = 'SilentlyContinue'
+    }
     function Send-TelegramError {
     }
-    $context = [Microsoft.WindowsAzure.Commands.Common.Storage.AzureStorageContext]::EmptyContextInstance
-    $env:RESOURCE_GROUP = 'rgn'
-    $env:STORAGE_ACCOUNT_NAME = 'san'
-    $env:CONTAINER_NAME = 'xxxxxxxxxx/default/cn'
     Context 'Get-StorageInfo' {
         BeforeEach {
+            $context = [Microsoft.WindowsAzure.Commands.Common.Storage.AzureStorageContext]::EmptyContextInstance
+            $env:RESOURCE_GROUP = 'rgn'
+            $env:STORAGE_ACCOUNT_NAME = 'san'
+            $env:CONTAINER_NAME = 'xxxxxxxxxx/default/cn'
+
             Mock -CommandName Get-AzStorageAccount -MockWith {
                 [PSCustomObject]@{
                     ResourceGroupName           = 'rgn'

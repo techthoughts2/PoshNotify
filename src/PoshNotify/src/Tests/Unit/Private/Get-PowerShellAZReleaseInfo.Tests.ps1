@@ -17,35 +17,38 @@ $WarningPreference = 'SilentlyContinue'
 InModuleScope 'PoshNotify' {
     #-------------------------------------------------------------------------
     $WarningPreference = 'SilentlyContinue'
-    $ErrorActionPreference = 'SilentlyContinue'
     #-------------------------------------------------------------------------
+    BeforeAll {
+        $WarningPreference = 'SilentlyContinue'
+        $ErrorActionPreference = 'SilentlyContinue'
+    }
     function Send-TelegramError {
     }
-    $releaseInfo = [System.Collections.ArrayList]@()
-    $obj1 = [PSCustomObject]@{
-        id        = 'tag:github.com,2008:Repository/23891194/v6.0.0-May2021'
-        updated   = '2021-05-21T07:41:05Z'
-        link      = 'link'
-        title     = 'Az 6.0.0'
-        content   = 'content'
-        author    = 'author'
-        thumbnail = 'thumbnail'
-    }
-    $obj2 = [PSCustomObject]@{
-        id        = 'tag:github.com,2008:Repository/23891194/Az.Accounts-v2.2.77'
-        updated   = '2021-05-12T10:27:42Z'
-        link      = 'link'
-        title     = 'Az.Accounts 2.2.77'
-        content   = 'content'
-        author    = 'author'
-        thumbnail = 'thumbnail'
-    }
-
-    $releaseInfo.Add($obj1) | Out-Null
-    $releaseInfo.Add($obj2) | Out-Null
 
     Context 'Get-PowerShellAZReleaseInfo' {
         BeforeEach {
+            $releaseInfo = [System.Collections.ArrayList]@()
+            $obj1 = [PSCustomObject]@{
+                id        = 'tag:github.com,2008:Repository/23891194/v6.0.0-May2021'
+                updated   = '2021-05-21T07:41:05Z'
+                link      = 'link'
+                title     = 'Az 6.0.0'
+                content   = 'content'
+                author    = 'author'
+                thumbnail = 'thumbnail'
+            }
+            $obj2 = [PSCustomObject]@{
+                id        = 'tag:github.com,2008:Repository/23891194/Az.Accounts-v2.2.77'
+                updated   = '2021-05-12T10:27:42Z'
+                link      = 'link'
+                title     = 'Az.Accounts 2.2.77'
+                content   = 'content'
+                author    = 'author'
+                thumbnail = 'thumbnail'
+            }
+
+            $releaseInfo.Add($obj1) | Out-Null
+            $releaseInfo.Add($obj2) | Out-Null
             Mock -CommandName Invoke-RestMethod -MockWith {
                 $releaseInfo
             } #endMock

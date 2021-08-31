@@ -9,19 +9,21 @@ if (Get-Module -Name $ModuleName -ErrorAction 'SilentlyContinue') {
     Remove-Module -Name $ModuleName -Force
 }
 Import-Module $PathToManifest -Force
-#-------------------------------------------------------------------------
-$WarningPreference = 'SilentlyContinue'
-#-------------------------------------------------------------------------
-#Import-Module $moduleNamePath -Force
 
 InModuleScope 'PoshNotify' {
     #-------------------------------------------------------------------------
     $WarningPreference = 'SilentlyContinue'
-    $ErrorActionPreference = 'SilentlyContinue'
     #-------------------------------------------------------------------------
+    BeforeAll {
+        $WarningPreference = 'SilentlyContinue'
+        $ErrorActionPreference = 'SilentlyContinue'
+    }
     function Send-TelegramError {
     }
-    $json = @'
+
+    Context 'Get-Reddit' {
+        BeforeEach {
+            $json = @'
 {
     "kind": "Listing",
     "data": {
@@ -3385,8 +3387,6 @@ InModuleScope 'PoshNotify' {
     }
 }
 '@
-    Context 'Get-Reddit' {
-        BeforeEach {
             Mock -CommandName Invoke-WebRequest -MockWith {
                 [PSCustomObject]@{
                     StatusCode        = 200

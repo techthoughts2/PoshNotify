@@ -104,7 +104,7 @@ function Set-BlobVersionInfo {
                 return $result
             }
 
-        }#if_Should
+        } #if_Should
 
     }
 

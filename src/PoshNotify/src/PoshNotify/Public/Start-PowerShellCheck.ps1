@@ -36,7 +36,7 @@ function Start-PowerShellCheck {
 
         Write-Verbose -Message ('[{0}] Confirm={1} ConfirmPreference={2} WhatIf={3} WhatIfPreference={4}' -f $MyInvocation.MyCommand, $Confirm, $ConfirmPreference, $WhatIf, $WhatIfPreference)
 
-    }#begin
+    } #begin
     Process {
         $result = $true #assume the best
         # -Confirm --> $ConfirmPreference = 'Low'

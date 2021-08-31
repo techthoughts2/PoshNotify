@@ -185,7 +185,10 @@ Add-BuildTask AnalyzeTests -After Analyze {
         $scriptAnalyzerParams = @{
             Path        = $script:TestsPath
             Setting     = 'PSScriptAnalyzerSettings.psd1'
-            ExcludeRule = 'PSAvoidOverwritingBuiltInCmdlets'
+            ExcludeRule = @(
+                'PSAvoidOverwritingBuiltInCmdlets'
+                'PSUseDeclaredVarsMoreThanAssignments'
+            )
             Recurse     = $true
             Verbose     = $false
         }
@@ -194,7 +197,7 @@ Add-BuildTask AnalyzeTests -After Analyze {
         $scriptAnalyzerResults = Invoke-ScriptAnalyzer @scriptAnalyzerParams
 
         if ($scriptAnalyzerResults) {
-            $scriptAnalyzerResults | Format-Table
+            $'senpnnts'AnalyzerResults | Format-Table
             throw '      One or more PSScriptAnalyzer errors/warnings where found.'
         }
         else {

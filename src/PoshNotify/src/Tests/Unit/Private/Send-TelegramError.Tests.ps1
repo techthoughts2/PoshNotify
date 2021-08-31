@@ -10,8 +10,6 @@ if (Get-Module -Name $ModuleName -ErrorAction 'SilentlyContinue') {
 }
 Import-Module $PathToManifest -Force
 Import-Module 'Az.Storage' -Force
-function Send-TelegramTextMessage {
-}
 
 InModuleScope 'PoshNotify' {
     #-------------------------------------------------------------------------
@@ -24,6 +22,8 @@ InModuleScope 'PoshNotify' {
 
     Context 'Send-TelegramError' {
         BeforeEach {
+            function Send-TelegramTextMessage {
+            }
             Mock -CommandName Send-TelegramTextMessage -MockWith {
                 [PSCustomObject]@{
                     ok     = 'True'

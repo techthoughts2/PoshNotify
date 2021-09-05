@@ -12,7 +12,7 @@
     RootModule        = 'PoshNotify.psm1'
 
     # Version number of this module.
-    ModuleVersion     = '0.9.7'
+    ModuleVersion     = '0.11.0'
 
     # Supported PSEditions
     # CompatiblePSEditions = @()
@@ -52,9 +52,10 @@
 
     # Modules that must be imported into the global environment prior to importing this module
     RequiredModules   = @(
-        'Convert',
-        'Az.Accounts',
+        'Convert'
+        'Az.Accounts'
         'Az.Storage'
+        'AzTable'
     )
 
     # Assemblies that must be loaded prior to importing this module

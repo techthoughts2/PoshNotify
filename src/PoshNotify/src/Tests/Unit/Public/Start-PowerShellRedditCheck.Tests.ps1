@@ -19,9 +19,9 @@ InModuleScope 'PoshNotify' {
         $ErrorActionPreference = 'SilentlyContinue'
     }
     Context 'Start-PowerShellRedditCheck' {
-        function Send-SlackMessage {
-        }
         BeforeEach {
+            function Send-SlackMessage {
+            }
             $redditInfo = [System.Collections.ArrayList]@()
             $obj1 = [PSCustomObject]@{
                 Title = 'Proud noob moment'

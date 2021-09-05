@@ -4,6 +4,9 @@
 
 # region script variables
 # $script:resourcePath = "$PSScriptRoot\Resources"
-$script:psVersionData = 'pwshversion'
-$script:azVersionDate = 'azversion'
 $script:psBlogData = 'pwshblog'
+$script:pwsh = 'pwsh'
+$script:pwshPreview = 'pwshpreview'
+$script:az = 'az'
+$script:azPreview = 'azpreview'
+$script:versionRegex = '\d+(?:\.\d+)+'

@@ -40,7 +40,7 @@ function Get-TableInfo {
     catch {
         Write-Error $_
         Send-TelegramError -ErrorMessage 'Get-StorageInfo did not find the storage account successfully.'
-        return $storageTable
+        return $false
     }
 
     if ($null -eq $storageTable) {

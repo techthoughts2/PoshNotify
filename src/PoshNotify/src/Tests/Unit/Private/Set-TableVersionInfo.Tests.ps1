@@ -1,25 +1,4 @@
-﻿<#
-ICloudBlob                         : Microsoft.Azure.Storage.Blob.CloudBlockBlob
-BlobType                           : BlockBlob
-Length                             : 736
-IsDeleted                          : False
-BlobClient                         : Azure.Storage.Blobs.BlobClient
-BlobBaseClient                     : Azure.Storage.Blobs.Specialized.BlockBlobClient
-BlobProperties                     : Azure.Storage.Blobs.Models.BlobProperties
-RemainingDaysBeforePermanentDelete :
-ContentType                        : application/octet-stream
-LastModified                       : 05/20/21 02:06:54 +00:00
-SnapshotTime                       :
-ContinuationToken                  :
-VersionId                          :
-IsLatestVersion                    :
-AccessTier                         : Hot
-TagCount                           : 0
-Tags                               :
-Context                            : Microsoft.WindowsAzure.Commands.Storage.AzureStorageContext
-Name                               : test123
-#>
-#-------------------------------------------------------------------------
+﻿#-------------------------------------------------------------------------
 Set-Location -Path $PSScriptRoot
 #-------------------------------------------------------------------------
 $ModuleName = 'PoshNotify'
@@ -43,15 +22,16 @@ InModuleScope 'PoshNotify' {
     function Send-TelegramError {
     }
 
-    Context 'Set-BlobVersionInfo' {
+    Context 'Set-TableVersionInfo' {
         BeforeEach {
-            $Blob = 'test'
-            $file = 'c:\test.log'
             $context = [Microsoft.WindowsAzure.Commands.Common.Storage.AzureStorageContext]::EmptyContextInstance
             $env:RESOURCE_GROUP = 'rgn'
             $env:STORAGE_ACCOUNT_NAME = 'san'
             $env:CONTAINER_NAME = 'xxxxxxxxxx/default/cn'
-
+            $env:TABLE_NAME = 'testtable'
+            $Properties = [ordered]@{
+                Date = '2022'
+            }
             Mock -CommandName Get-StorageInfo -MockWith {
                 [PSCustomObject]@{
                     ResourceGroupName           = 'rgn'
@@ -91,92 +71,84 @@ InModuleScope 'PoshNotify' {
                     ExtendedProperties          = '{}'
                 }
             } #endMock
-            Mock -CommandName Set-AzStorageBlobContent -MockWith {
+            Mock -CommandName Get-TableInfo -MockWith {
                 [PSCustomObject]@{
-                    ICloudBlob                         = 'Microsoft.Azure.Storage.Blob.CloudBlockBlob'
-                    BlobType                           = 'BlockBlob'
-                    Length                             = '736'
-                    IsDeleted                          = 'False'
-                    BlobClient                         = 'Azure.Storage.Blobs.BlobClient'
-                    BlobBaseClient                     = 'Azure.Storage.Blobs.Specialized.BlockBlobClient'
-                    BlobProperties                     = 'Azure.Storage.Blobs.Models.BlobProperties'
-                    RemainingDaysBeforePermanentDelete = ''
-                    ContentType                        = 'application/octet-stream'
-                    LastModified                       = '05/20/21 02:06:54 +00:00'
-                    SnapshotTime                       = ''
-                    ContinuationToken                  = ''
-                    VersionId                          = ''
-                    IsLatestVersion                    = ''
-                    AccessTier                         = 'Hot'
-                    TagCount                           = '0'
-                    Tags                               = ''
-                    Context                            = 'Microsoft.WindowsAzure.Commands.Storage.AzureStorageContext'
-                    Name                               = 'test123'
+                    CloudTable = 'tableName'
+                    Uri        = 'https://xxxxxxxxx.table.core.windows.net/tableName'
+                    Context    = 'Microsoft.WindowsAzure.Commands.Storage.AzureStorageContext'
+                    Name       = 'tableName'
                 }
             } #endMock
-            Mock -CommandName Test-Path -MockWith {
-                $true
+            Mock -CommandName Add-AzTableRow -MockWith {
+                [PSCustomObject]@{
+                    Result         = 'Microsoft.Azure.Cosmos.Table.DynamicTableEntity'
+                    HttpStatusCode = '204'
+                    Etag           = 'W/"datetime2021-09-02T21%3A31%3A43.0434715Z"'
+                    SessionToken   = ''
+                    RequestCharge  = ''
+                    ActivityId     = ''
+                }
             } #endMock
         } #beforeeach
         Context 'ShouldProcess' {
             BeforeEach {
-                Mock -CommandName Set-BlobVersionInfo -MockWith { } #endMock
+                Mock -CommandName Set-TableVersionInfo -MockWith { } #endMock
             }
             It 'Should process by default' {
-                Set-BlobVersionInfo -Blob $Blob -File $file
-                Assert-MockCalled Set-BlobVersionInfo -Scope It -Exactly -Times 1
+                Set-TableVersionInfo -PartitionKey 'pwsh' -RowKey '8.0.0' -Properties $Properties
+                Assert-MockCalled Set-TableVersionInfo -Scope It -Exactly -Times 1
             } #it
             It 'Should not process on explicit request for confirmation (-Confirm)' {
-                { Set-BlobVersionInfo -Blob $Blob -File $file -Confirm }
-                Assert-MockCalled Set-BlobVersionInfo -Scope It -Exactly -Times 0
+                { Set-TableVersionInfo -PartitionKey 'pwsh' -RowKey '8.0.0' -Properties $Properties }
+                Assert-MockCalled Set-TableVersionInfo -Scope It -Exactly -Times 0
             } #it
             It 'Should not process on implicit request for confirmation (ConfirmPreference)' {
                 {
                     $ConfirmPreference = 'Medium'
-                    Set-BlobVersionInfo -Blob $Blob -File $file
+                    Set-TableVersionInfo -PartitionKey 'pwsh' -RowKey '8.0.0' -Properties $Properties
                 }
-                Assert-MockCalled Set-BlobVersionInfo -Scope It -Exactly -Times 0
+                Assert-MockCalled Set-TableVersionInfo -Scope It -Exactly -Times 0
             } #it
             It 'Should not process on explicit request for validation (-WhatIf)' {
-                { Set-BlobVersionInfo -Blob $Blob -File $file -WhatIf }
-                Assert-MockCalled Set-BlobVersionInfo -Scope It -Exactly -Times 0
+                { Set-TableVersionInfo -PartitionKey 'pwsh' -RowKey '8.0.0' -Properties $Properties -WhatIf }
+                Assert-MockCalled Set-TableVersionInfo -Scope It -Exactly -Times 0
             } #it
             It 'Should not process on implicit request for validation (WhatIfPreference)' {
                 {
                     $WhatIfPreference = $true
-                    Set-BlobVersionInfo -Blob $Blob -File $file
+                    Set-TableVersionInfo -PartitionKey 'pwsh' -RowKey '8.0.0' -Properties $Properties
                 }
-                Assert-MockCalled Set-BlobVersionInfo -Scope It -Exactly -Times 0
+                Assert-MockCalled Set-TableVersionInfo -Scope It -Exactly -Times 0
             } #it
             It 'Should process on force' {
                 $ConfirmPreference = 'Medium'
-                Set-BlobVersionInfo -Blob $Blob -File $file -Force
-                Assert-MockCalled Set-BlobVersionInfo -Scope It -Exactly -Times 1
+                Set-TableVersionInfo -PartitionKey 'pwsh' -RowKey '8.0.0' -Properties $Properties -Force
+                Assert-MockCalled Set-TableVersionInfo -Scope It -Exactly -Times 1
             } #it
         } #context
         Context 'Error' {
-            It 'should return false if an error is encountered uploading the blob' {
-                Mock -CommandName Set-AzStorageBlobContent -MockWith {
+            It 'should return false if an error is encountered updating the table' {
+                Mock -CommandName Add-AzTableRow -MockWith {
                     throw 'FakeError'
                 } #endMock
-                Set-BlobVersionInfo -Blob $Blob -File $file -Force | Should -BeExactly $false
+                Set-TableVersionInfo -PartitionKey 'pwsh' -RowKey '8.0.0' -Properties $Properties -Force | Should -BeExactly $false
             } #it
             It 'should return false if no storage account info is returned' {
                 Mock -CommandName Get-StorageInfo -MockWith {
                     $null
                 } #endMock
-                Set-BlobVersionInfo -Blob $Blob -File $file -Force | Should -BeExactly $false
+                Set-TableVersionInfo -PartitionKey 'pwsh' -RowKey '8.0.0' -Properties $Properties | Should -BeExactly $false
             } #it
-            It 'should return false if the file specified is not found' {
-                Mock -CommandName Test-Path -MockWith {
-                    $false1
+            It 'should return false if no table results are returned' {
+                Mock -CommandName Get-TableInfo -MockWith {
+                    $null
                 } #endMock
-                Set-BlobVersionInfo -Blob $Blob -File $file -Force | Should -BeExactly $false
+                Set-TableVersionInfo -PartitionKey 'pwsh' -RowKey '8.0.0' -Properties $Properties | Should -BeExactly $false
             } #it
         } #context-error
         Context 'Success' {
             It 'should return expected results if successful' {
-                Set-BlobVersionInfo -Blob $Blob -File $file -Force | Should -BeExactly $true
+                Set-TableVersionInfo -PartitionKey 'pwsh' -RowKey '8.0.0' -Properties $Properties -Force | Should -BeExactly $true
             } #it
         } #context-success
     } #context

@@ -36,20 +36,20 @@ InModuleScope 'PoshNotify' {
             } #endMock
         } #beforeeach
         Context 'Error' {
-            It 'should return null if an error is encountered getting storage account context' {
+            It 'should return false if an error is encountered getting storage account context' {
                 Mock -CommandName Get-AzStorageTable -MockWith {
                     throw 'FakeError'
                 } #endMock
-                Get-TableInfo -StorageContext $context | Should -BeNullOrEmpty
+                Get-TableInfo -StorageContext $context | Should -BeExactly $false
             } #it
-            It 'should return null if no storage account info is returned' {
+        } #context-error
+        Context 'Success' {
+            It 'should return null if no table results are returned' {
                 Mock -CommandName Get-AzStorageTable -MockWith {
                     $null
                 } #endMock
                 Get-TableInfo -StorageContext $context | Should -BeNullOrEmpty
             } #it
-        } #context-error
-        Context 'Success' {
             It 'should return expected results if successful' {
                 $eval = Get-TableInfo -StorageContext $context
                 $eval.CloudTable | Should -BeExactly 'tableName'

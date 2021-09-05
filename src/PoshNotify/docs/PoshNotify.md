@@ -2,13 +2,13 @@
 Module Name: PoshNotify
 Module Guid: 926431a3-ca14-43ad-925e-2ab19c9f6808
 Download Help Link: NA
-Help Version: 0.11.0
+Help Version: 0.12.0
 Locale: en-US
 ---
 
 # PoshNotify Module
 ## Description
-Retrieves PowerShell information and sends notifications.
+Retrieves various information regarding PowerShell and sends slacks notifications keeping group memebers up to date.
 
 ## PoshNotify Cmdlets
 ### [Start-PowerShellAZCheck](Start-PowerShellAZCheck.md)
@@ -22,5 +22,8 @@ Evaluates if new versions of PowerShell have been released and sends slack messa
 
 ### [Start-PowerShellRedditCheck](Start-PowerShellRedditCheck.md)
 Retrieves the top 5 posts from /r/PowerShell and sends them in a properly formatted message.
+
+### [Start-PSScriptAnalyzerCheck](Start-PSScriptAnalyzerCheck.md)
+Evaluates if new versions of PSScriptAnalyzer have been released and sends slack messages notifying of upgrades.
 
 

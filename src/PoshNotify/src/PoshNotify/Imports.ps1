@@ -9,4 +9,8 @@ $script:pwsh = 'pwsh'
 $script:pwshPreview = 'pwshpreview'
 $script:az = 'az'
 $script:azPreview = 'azpreview'
+$script:pssa = 'pssa'
 $script:versionRegex = '\d+(?:\.\d+)+'
+
+# $pwshReleaseInfo | select url,id,tag_name,name,draft,prerelease,created_at,published_at,html_url
+# $pwshReleaseInfo | select name,draft,prerelease

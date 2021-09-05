@@ -21,7 +21,6 @@ InModuleScope 'PoshNotify' {
     function Send-TelegramError {
     }
 
-    # $pwshReleaseInfo | select url,id,tag_name,name,draft,prerelease,created_at,published_at,html_url
     Context 'Get-PowerShellReleaseInfo' {
         BeforeEach {
             $releaseInfo = [System.Collections.ArrayList]@()

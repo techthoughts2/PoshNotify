@@ -42,7 +42,6 @@ function Get-PowerShellReleaseInfo {
 
     $pwsh = $pwshSortedByRelease | Where-Object { $_.prerelease -eq $false } | Select-Object -First 1
     $pwshPreview = $pwshSortedByRelease | Where-Object { $_.prerelease -eq $true } | Select-Object -First 1
-    Write-Verbose -Message ($pwshPreview | Out-String)
 
     $pwshParse = $pwsh.name | Select-String -Pattern $script:versionRegex
     $pwshVersion = $pwshParse.Matches.Value

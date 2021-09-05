@@ -25,6 +25,8 @@
     System.Boolean
 .NOTES
     Add-AzTableRow
+
+    Jake Morrison - @jakemorrison - https://www.techthoughts.info
 .COMPONENT
     PoshNotify
 #>

@@ -11,6 +11,8 @@
     Microsoft.Azure.Commands.Management.Storage.Models.PSStorageAccount
 .NOTES
     Get-AzStorageAccount
+
+    Jake Morrison - @jakemorrison - https://www.techthoughts.info
 .COMPONENT
     PoshNotify
 #>

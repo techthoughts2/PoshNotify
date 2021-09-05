@@ -23,6 +23,8 @@
 .NOTES
     Set-AzStorageBlobContent
     Test-Path
+
+    Jake Morrison - @jakemorrison - https://www.techthoughts.info
 .COMPONENT
     PoshNotify
 #>

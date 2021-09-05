@@ -25,6 +25,8 @@
     None
 .NOTES
     Invoke-RestMethod
+
+    Jake Morrison - @jakemorrison - https://www.techthoughts.info
 .LINK
     https://app.slack.com/block-kit-builder
 .LINK

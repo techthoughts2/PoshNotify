@@ -14,7 +14,11 @@
 .OUTPUTS
     System.Management.Automation.PSCustomObject
 .NOTES
+    Get-StorageInfo
     Get-AzTableRow
+    Get-TableInfo
+
+    Jake Morrison - @jakemorrison - https://www.techthoughts.info
 .COMPONENT
     PoshNotify
 #>

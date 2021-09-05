@@ -11,6 +11,8 @@
     None
 .NOTES
     This took a lot longer to make than I thought it would.
+
+    Jake Morrison - @jakemorrison - https://www.techthoughts.info
 .COMPONENT
     PoshNotify
 #>

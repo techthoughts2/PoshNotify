@@ -13,6 +13,10 @@
     System.Management.Automation.PSCustomObject
 .NOTES
     Invoke-RestMethod
+
+    The GitHub Token is sourced from the Azure function env variables
+
+    Jake Morrison - @jakemorrison - https://www.techthoughts.info
 .COMPONENT
     PoshNotify
 #>

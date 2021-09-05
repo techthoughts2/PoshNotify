@@ -30,7 +30,7 @@
     Copyright         = '(c) Jake Morrison. All rights reserved.'
 
     # Description of the functionality provided by this module
-    Description       = 'Retrieves PowerShell information and sends notifications.'
+    Description       = 'Retrieves various information regarding PowerShell and sends slacks notifications keeping group memebers up to date.'
 
     # Minimum version of the PowerShell engine required by this module
     # PowerShellVersion = ''

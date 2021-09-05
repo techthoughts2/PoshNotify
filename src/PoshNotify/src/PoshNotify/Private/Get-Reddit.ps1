@@ -11,6 +11,9 @@
     Get-Reddit -Subreddit PowerShell
     Retrieves the top 5 threads of the PowerShell subreddit for the week
 .NOTES
+    Invoke-WebRequest
+    ConvertFrom-Json
+
     Jake Morrison - @jakemorrison - https://www.techthoughts.info
 #>
 function Get-Reddit {

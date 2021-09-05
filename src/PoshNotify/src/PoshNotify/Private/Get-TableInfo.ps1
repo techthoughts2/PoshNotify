@@ -13,6 +13,10 @@
     Microsoft.WindowsAzure.Commands.Common.Storage.ResourceModel.AzureStorageTable
 .NOTES
     Get-AzStorageTable
+
+    The table name env is sourced from the Azure function environment variable
+
+    Jake Morrison - @jakemorrison - https://www.techthoughts.info
 .COMPONENT
     PoshNotify
 #>

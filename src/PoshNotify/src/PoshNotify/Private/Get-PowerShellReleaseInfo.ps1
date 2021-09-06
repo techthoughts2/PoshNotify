@@ -31,7 +31,8 @@ function Get-PowerShellReleaseInfo {
 
     $pwshReleaseInfo = Get-GitHubReleaseInfo -RepositoryName $repoName
 
-    if ([string]::IsNullOrWhiteSpace($pwshReleaseInfo)) {
+    if (-not ($pwshReleaseInfo.count -ge 1)) {
+        # if ($null -eq $pwshReleaseInfo) {
         Write-Warning -Message 'No release information was returned from the GitHub API.'
         return $null
     }

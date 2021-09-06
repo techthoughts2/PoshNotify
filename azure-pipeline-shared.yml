@@ -79,6 +79,7 @@ stages:
               Install-Module -Name Convert -Repository PSGallery -SkipPublisherCheck -Force
               Install-Module -Name Az.Accounts -Repository PSGallery -SkipPublisherCheck -Force
               Install-Module -Name Az.Storage -Repository PSGallery -SkipPublisherCheck -Force
+              Install-Module -Name AzTable -Repository PSGallery -SkipPublisherCheck -Force
 
   - stage: PoshNotifyModuleTestandBuild
     displayName: Posh Notify Module Build

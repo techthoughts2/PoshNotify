@@ -29,7 +29,6 @@ function Get-GitHubReleaseInfo {
         [string]$RepositoryName
     )
 
-    $env:GITHUB_API_TOKEN = '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'
     $uri = 'https://api.github.com/repos/{0}/releases' -f $RepositoryName
     $invokeWebRequestSplat = @{
         Uri         = $uri

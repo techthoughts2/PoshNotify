@@ -29,11 +29,6 @@ function Get-GitHubReleaseInfo {
         [string]$RepositoryName
     )
 
-    if ($env:WEBSITE_CONTENTSHARE) {
-        Write-Verbose 'Ze token:'
-        Write-Verbose ($env:GITHUB_API_TOKEN.Substring(0, 5))
-    }
-
     $uri = 'https://api.github.com/repos/{0}/releases' -f $RepositoryName
     $invokeWebRequestSplat = @{
         Uri         = $uri

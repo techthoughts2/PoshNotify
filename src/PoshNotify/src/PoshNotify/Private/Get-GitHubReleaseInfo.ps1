@@ -29,13 +29,8 @@ function Get-GitHubReleaseInfo {
         [string]$RepositoryName
     )
 
-    if ($null -eq $env:GITHUB_API_TOKEN) {
-        Send-TelegramError -ErrorMessage 'No GitHub Secret retrieved.'
-        return $null
-    }
-    else {
-        Write-Verbose ($env:GITHUB_API_TOKEN.Substring(0, 5))
-    }
+    Write-Verbose 'Ze token:'
+    Write-Verbose ($env:GITHUB_API_TOKEN.Substring(0, 5))
 
     $uri = 'https://api.github.com/repos/{0}/releases' -f $RepositoryName
     $invokeWebRequestSplat = @{

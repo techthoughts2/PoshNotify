@@ -659,6 +659,7 @@ resource functionapp 'Microsoft.Web/sites@2020-12-01' = {
       'SLACK_ENDPOINT': '@Microsoft.KeyVault(SecretUri=https://${keyvault.name}.vault.azure.net/secrets/slack-${environmentType}/)'
       'TOKEN': '@Microsoft.KeyVault(SecretUri=https://${keyvault.name}.vault.azure.net/secrets/tttoken/)'
       'CHANNEL': '@Microsoft.KeyVault(SecretUri=https://${keyvault.name}.vault.azure.net/secrets/ttchannel/)'
+      'GITHUB_API_TOKEN': '@Microsoft.KeyVault(SecretUri=https://${keyvault.name}.vault.azure.net/secrets/githubapitoken/)'
       'CONTAINER_NAME': container.name
       'RESOURCE_GROUP': '${projectName}-${environmentType}'
       'STORAGE_ACCOUNT_NAME': storageaccount.name

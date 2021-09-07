@@ -61,39 +61,6 @@ InModuleScope 'PoshNotify' {
                 } #endMock
                 Get-PowerShellReleaseInfo | Should -BeNullOrEmpty
             } #it
-            It 'should return null if the preview version number can not be parsed properly' {
-                $releaseInfo2 = [System.Collections.ArrayList]@()
-                $obj4 = [PSCustomObject]@{
-                    url          = 'https://api.github.com/repos/PowerShell/PowerShell/releases/47773891'
-                    id           = '47773891'
-                    tag_name     = 'v7.1.4'
-                    name         = 'v7.1.4 Release of PowerShell'
-                    draft        = 'False'
-                    prerelease   = 'False'
-                    created_at   = '08 / 12 / 21 22:17:28'
-                    published_at = '08 / 12 / 21 22:19:31'
-                    html_url     = 'https://github.com/PowerShell/PowerShell/releases/tag/v7.1.4'
-                }
-                $obj5 = [PSCustomObject]@{
-                    url          = 'https://api.github.com/repos/PowerShell/PowerShell/releases/48290816'
-                    id           = '48290816'
-                    tag_name     = 'vnotaversionnumber-preview.9'
-                    name         = 'vnotaversionnumber-preview.9 Release of PowerShell'
-                    draft        = 'False'
-                    prerelease   = 'True'
-                    created_at   = '08 / 23 / 21 18:14:55'
-                    published_at = '08 / 23 / 21 18:34:52'
-                    html_url     = 'https://github.com/PowerShell/PowerShell/releases/tag/v7.2.0-preview.9'
-                }
-
-                $releaseInfo2.Add($obj4) | Out-Null
-                $releaseInfo2.Add($obj5) | Out-Null
-
-                Mock -CommandName Get-GitHubReleaseInfo -MockWith {
-                    $releaseInfo2
-                } #endMock
-                Get-PowerShellReleaseInfo | Should -BeNullOrEmpty
-            } #it
             It 'should return null if the version number can not be parsed properly' {
                 $releaseInfo3 = [System.Collections.ArrayList]@()
                 $obj6 = [PSCustomObject]@{
@@ -135,6 +102,34 @@ InModuleScope 'PoshNotify' {
                 } -Verifiable
                 Get-PowerShellReleaseInfo
                 Assert-VerifiableMock
+            } #it
+            It 'should return null values if no preview version is returned' {
+                $releaseInfo4 = [System.Collections.ArrayList]@()
+                $obj10 = [PSCustomObject]@{
+                    url          = 'https://api.github.com/repos/PowerShell/PowerShell/releases/47773891'
+                    id           = '47773891'
+                    tag_name     = 'v7.1.4'
+                    name         = 'v7.1.4 Release of PowerShell'
+                    draft        = 'False'
+                    prerelease   = 'False'
+                    created_at   = '08 / 12 / 21 22:17:28'
+                    published_at = '08 / 12 / 21 22:19:31'
+                    html_url     = 'https://github.com/PowerShell/PowerShell/releases/tag/v7.1.4'
+                }
+
+                $releaseInfo4.Add($obj10) | Out-Null
+
+                Mock -CommandName Get-GitHubReleaseInfo -MockWith {
+                    $releaseInfo4
+                } #endMock
+                $eval = Get-PowerShellReleaseInfo
+                $eval.PwshVersion | Should -BeExactly '7.1.4'
+                $eval.PwshTitle | Should -BeExactly 'v7.1.4 Release of PowerShell'
+                $eval.PwshLink | Should -BeExactly 'https://github.com/PowerShell/PowerShell/releases/tag/v7.1.4'
+                $eval.PwshPreviewVersion | Should -BeNullOrEmpty
+                $eval.PwshPreviewTitle | Should -BeNullOrEmpty
+                $eval.PwshPreviewLink | Should -BeNullOrEmpty
+                $eval.PwshPreviewRC | Should -BeNullOrEmpty
             } #it
             It 'should return expected results if successful' {
                 $eval = Get-PowerShellReleaseInfo

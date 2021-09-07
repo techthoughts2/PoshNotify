@@ -112,10 +112,34 @@ InModuleScope 'PoshNotify' {
                 } #endMock
                 Start-PowerShellCheck | Should -BeExactly $false
             } #it
-            It 'should return false if an issue is encountered getting table information' {
-                Mock -CommandName Get-TableRowInfo -MockWith {
-                    $false
-                } #endMock
+            It 'should return false if an issue is encountered getting version table information' {
+                $script:mockCalled = 0
+                $mockInvoke = {
+                    $script:mockCalled++
+                    if ($script:mockCalled -eq 1) {
+                        return $false
+                    }
+                    elseif ($script:mockCalled -eq 2) {
+                        return $true
+                    }
+                }
+                Mock -CommandName Get-TableRowInfo -MockWith $mockInvoke
+
+                Start-PowerShellCheck | Should -BeExactly $false
+            } #it
+            It 'should return false if an issue is encountered getting preview version table information' {
+                $script:mockCalled = 0
+                $mockInvoke = {
+                    $script:mockCalled++
+                    if ($script:mockCalled -eq 1) {
+                        return $true
+                    }
+                    elseif ($script:mockCalled -eq 2) {
+                        return $false
+                    }
+                }
+                Mock -CommandName Get-TableRowInfo -MockWith $mockInvoke
+
                 Start-PowerShellCheck | Should -BeExactly $false
             } #it
             # It 'should return false if no version information is found from blob' {
@@ -238,6 +262,22 @@ InModuleScope 'PoshNotify' {
                 Assert-MockCalled Set-TableVersionInfo -Scope It -Exactly -Times 1
                 Assert-MockCalled Set-BlobVersionInfo -Scope It -Exactly -Times 1
                 Assert-MockCalled Send-SlackMessage -Scope It -Exactly -Times 1
+            } #it
+            It 'should only run version logic if no preview version is found' {
+                Mock -CommandName Get-PowerShellReleaseInfo -MockWith {
+                    [PSCustomObject]@{
+                        PwshVersion        = '7.1.4'
+                        PwshTitle          = 'v7.1.4 Release of PowerShell'
+                        PwshLink           = 'https://github.com/PowerShell/PowerShell/releases/tag/v7.1.4'
+                        PwshPreviewVersion = $null
+                        PwshPreviewTitle   = $null
+                        PwshPreviewLink    = $null
+                        PwshPreviewRC      = $null
+                    }
+                } #endMock
+
+                Start-PowerShellCheck
+                Assert-MockCalled Get-TableRowInfo  -Scope It -Exactly -Times 1
             } #it
             It 'should perform the updates for PowerShell version with the correct parameters' {
                 $script:mockCalled = 0

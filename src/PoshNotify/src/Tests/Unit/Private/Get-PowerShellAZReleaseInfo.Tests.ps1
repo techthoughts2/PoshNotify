@@ -77,39 +77,6 @@ InModuleScope 'PoshNotify' {
                 } #endMock
                 Get-PowerShellAZReleaseInfo | Should -BeNullOrEmpty
             } #it
-            It 'should return null if the preview version number can not be parsed properly' {
-                $releaseInfo2 = [System.Collections.ArrayList]@()
-                $obj4 = [PSCustomObject]@{
-                    url          = 'https://api.github.com/repos/Azure/azure-powershell/releases/48962155'
-                    id           = '48962155'
-                    tag_name     = 'vnotaversionnumber-September2021'
-                    name         = 'Az notaversionnumber'
-                    draft        = 'False'
-                    prerelease   = 'True'
-                    created_at   = '09 / 03 / 21 12:59:52'
-                    published_at = '09 / 03 / 21 13:05:55'
-                    html_url     = 'https://github.com/Azure/azure-powershell/releases/tag/v6.4.0-September2021'
-                }
-                $obj5 = [PSCustomObject]@{
-                    url          = 'https://api.github.com/repos/Azure/azure-powershell/releases/47034833'
-                    id           = '47034833'
-                    tag_name     = 'v6.3.0-August2021'
-                    name         = 'Az v6.3.0'
-                    draft        = 'False'
-                    prerelease   = 'False'
-                    created_at   = '07/29/21 04:49:30'
-                    published_at = '07/30/21 09:59:23'
-                    html_url     = 'https://github.com/Azure/azure-powershell/releases/tag/v6.3.0-August2021'
-                }
-
-                $releaseInfo2.Add($obj4) | Out-Null
-                $releaseInfo2.Add($obj5) | Out-Null
-
-                Mock -CommandName Get-GitHubReleaseInfo -MockWith {
-                    $releaseInfo2
-                } #endMock
-                Get-PowerShellAZReleaseInfo | Should -BeNullOrEmpty
-            } #it
             It 'should return null if the version number can not be parsed properly' {
                 $releaseInfo3 = [System.Collections.ArrayList]@()
                 $obj6 = [PSCustomObject]@{
@@ -151,6 +118,45 @@ InModuleScope 'PoshNotify' {
                 } -Verifiable
                 Get-PowerShellAZReleaseInfo
                 Assert-VerifiableMock
+            } #it
+            It 'should return null values if no preview version is returned' {
+                $releaseInfo2 = [System.Collections.ArrayList]@()
+                $obj4 = [PSCustomObject]@{
+                    url          = 'https://api.github.com/repos/Azure/azure-powershell/releases/48962155'
+                    id           = '48962155'
+                    tag_name     = 'v6.4.0-September2021'
+                    name         = 'Az v6.4.0'
+                    draft        = 'False'
+                    prerelease   = 'False'
+                    created_at   = '09/03/21 12:59:52'
+                    published_at = '09/03/21 13:05:55'
+                    html_url     = 'https://github.com/Azure/azure-powershell/releases/tag/v6.4.0-September2021'
+                }
+                $obj5 = [PSCustomObject]@{
+                    url          = 'https://api.github.com/repos/Azure/azure-powershell/releases/47034833'
+                    id           = '47034833'
+                    tag_name     = 'v6.3.0-August2021'
+                    name         = 'Az v6.3.0'
+                    draft        = 'False'
+                    prerelease   = 'False'
+                    created_at   = '07/29/21 04:49:30'
+                    published_at = '07/30/21 09:59:23'
+                    html_url     = 'https://github.com/Azure/azure-powershell/releases/tag/v6.3.0-August2021'
+                }
+
+                $releaseInfo2.Add($obj4) | Out-Null
+                $releaseInfo2.Add($obj5) | Out-Null
+
+                Mock -CommandName Get-GitHubReleaseInfo -MockWith {
+                    $releaseInfo2
+                } #endMock
+                $eval = Get-PowerShellAZReleaseInfo
+                $eval.AZVersion | Should -BeExactly '6.4.0'
+                $eval.AZTitle | Should -BeExactly 'Az v6.4.0'
+                $eval.AZLink | Should -BeExactly 'https://github.com/Azure/azure-powershell/releases/tag/v6.4.0-September2021'
+                $eval.AZPreviewVersion | Should -BeNullOrEmpty
+                $eval.AZPreviewTitle | Should -BeNullOrEmpty
+                $eval.AZPreviewLink | Should -BeNullOrEmpty
             } #it
             It 'should return expected results if successful' {
                 $eval = Get-PowerShellAZReleaseInfo

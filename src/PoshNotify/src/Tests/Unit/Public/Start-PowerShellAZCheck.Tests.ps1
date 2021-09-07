@@ -105,10 +105,34 @@ InModuleScope 'PoshNotify' {
                 } #endMock
                 Start-PowerShellAZCheck | Should -BeExactly $false
             } #it
-            It 'should return false if an issue is encountered getting table information' {
-                Mock -CommandName Get-TableRowInfo -MockWith {
-                    $false
-                } #endMock
+            It 'should return false if an issue is encountered getting version table information' {
+                $script:mockCalled = 0
+                $mockInvoke = {
+                    $script:mockCalled++
+                    if ($script:mockCalled -eq 1) {
+                        return $false
+                    }
+                    elseif ($script:mockCalled -eq 2) {
+                        return $true
+                    }
+                }
+                Mock -CommandName Get-TableRowInfo -MockWith $mockInvoke
+
+                Start-PowerShellAZCheck | Should -BeExactly $false
+            } #it
+            It 'should return false if an issue is encountered getting preview version table information' {
+                $script:mockCalled = 0
+                $mockInvoke = {
+                    $script:mockCalled++
+                    if ($script:mockCalled -eq 1) {
+                        return $true
+                    }
+                    elseif ($script:mockCalled -eq 2) {
+                        return $false
+                    }
+                }
+                Mock -CommandName Get-TableRowInfo -MockWith $mockInvoke
+
                 Start-PowerShellAZCheck | Should -BeExactly $false
             } #it
             # It 'should return false if no version information is found from blob' {
@@ -238,12 +262,26 @@ InModuleScope 'PoshNotify' {
                 Assert-MockCalled Set-BlobVersionInfo -Scope It -Exactly -Times 1
                 Assert-MockCalled Send-SlackMessage -Scope It -Exactly -Times 1
             } #it
+            It 'should only run version logic if no preview version is found' {
+                Mock -CommandName Get-PowerShellAZReleaseInfo -MockWith {
+                    [PSCustomObject]@{
+                        AZVersion        = '6.3.0'
+                        AZTitle          = 'Az v6.3.0'
+                        AZLink           = 'https://github.com/Azure/azure-powershell/releases/tag/v6.3.0-August2021'
+                        AZPreviewVersion = $null
+                        AZPreviewTitle   = $null
+                        AZPreviewLink    = $null
+                    }
+                } #endMock
+
+                Start-PowerShellAZCheck
+                Assert-MockCalled Get-TableRowInfo  -Scope It -Exactly -Times 1
+            } #it
             It 'should perform the az updates with the correct parameters' {
                 $script:mockCalled = 0
                 $mockInvoke = {
                     $script:mockCalled++
                     if ($script:mockCalled -eq 1) {
-
                         return $null
                     }
                     elseif ($script:mockCalled -eq 2) {

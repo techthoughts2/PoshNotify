@@ -43,40 +43,49 @@ function Get-PowerShellReleaseInfo {
     $pwshSortedByRelease = $pwshReleaseInfo | Sort-Object { $_.published_at -as [datetime] } -Descending
 
     $pwsh = $pwshSortedByRelease | Where-Object { $_.prerelease -eq $false } | Select-Object -First 1
-    $pwshPreview = $pwshSortedByRelease | Where-Object { $_.prerelease -eq $true } | Select-Object -First 1
-
     $pwshParse = $pwsh.name | Select-String -Pattern $script:versionRegex
     $pwshVersion = $pwshParse.Matches.Value
-
-    $pwshPreviewParse = $pwshPreview.name | Select-String -Pattern $script:versionRegex
-    $pwshPreviewVersion = $pwshPreviewParse.Matches.Value
-
-    $rcMatch = ($pwshPreview.Name | Select-String -Pattern 'preview.\d').Matches.Value
-    $rcCandidate = $rcMatch.substring($rcMatch.length - 1)
-
-    Write-Verbose -Message 'Processing COMPLETE.'
 
     if ($null -eq $pwshVersion) {
         Send-TelegramError -ErrorMessage 'Get-PowerShellReleaseInfo did not parse the version number correctly.'
         return $null
     }
-    if ($null -eq $pwshPreviewVersion) {
-        Send-TelegramError -ErrorMessage 'Get-PowerShellReleaseInfo did not parse the preview version number correctly.'
-        return $null
+
+    # release info may - or may not contain a preview release version
+    $pwshPreview = $pwshSortedByRelease | Where-Object { $_.prerelease -eq $true } | Select-Object -First 1
+
+    if ($pwshPreview) {
+        Write-Verbose -Message 'Preview PowerShell version found. Processing preview'
+        $pwshPreviewParse = $pwshPreview.name | Select-String -Pattern $script:versionRegex
+        $pwshPreviewVersion = $pwshPreviewParse.Matches.Value
+
+        $rcMatch = ($pwshPreview.Name | Select-String -Pattern 'preview.\d').Matches.Value
+        $rcCandidate = $rcMatch.substring($rcMatch.length - 1)
+
+        $obj = [PSCustomObject]@{
+            PwshVersion        = $pwshVersion
+            PwshTitle          = $pwsh.name
+            PwshLink           = $pwsh.html_url
+            PwshPreviewVersion = $pwshPreviewVersion
+            PwshPreviewTitle   = $pwshPreview.name
+            PwshPreviewLink    = $pwshPreview.html_url
+            PwshPreviewRC      = $rcCandidate
+        }
+    }
+    else {
+        $obj = [PSCustomObject]@{
+            PwshVersion        = $pwshVersion
+            PwshTitle          = $pwsh.name
+            PwshLink           = $pwsh.html_url
+            PwshPreviewVersion = $null
+            PwshPreviewTitle   = $null
+            PwshPreviewLink    = $null
+            PwshPreviewRC      = $null
+        }
     }
 
-    $obj = [PSCustomObject]@{
-        PwshVersion        = $pwshVersion
-        PwshTitle          = $pwsh.name
-        PwshLink           = $pwsh.html_url
-        PwshPreviewVersion = $pwshPreviewVersion
-        PwshPreviewTitle   = $pwshPreview.name
-        PwshPreviewLink    = $pwshPreview.html_url
-        PwshPreviewRC      = $rcCandidate
-    }
 
     Write-Verbose -Message 'Processing COMPLETE.'
 
     return $obj
-
 } #Get-PowerShellReleaseInfo

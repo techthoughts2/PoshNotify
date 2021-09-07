@@ -67,8 +67,9 @@ function Start-PowerShellCheck {
 
             #endregion
 
-            #region table checks
+            #region version
 
+            #--------------------------------------------------------------------------------
             # query the table to see if the pwsh version already exists
             $partitionKey = $script:pwsh
             $rowKey = $pwshReleaseInfo.PwshVersion
@@ -77,21 +78,13 @@ function Start-PowerShellCheck {
                 RowKey       = $rowKey
             }
             $pwshTableInfo = Get-TableRowInfo @getTableRowInfoSplat
-            #--------------------------------------------------------
-            $partitionKeyPreview = $script:pwshPreview
-            $rowKeyPreview = $pwshReleaseInfo.PwshPreviewVersion
-            $getTableRowInfoSplat = @{
-                PartitionKey = $partitionKeyPreview
-                RowKey       = $rowKeyPreview
-            }
-            $pwshPreviewTableInfo = Get-TableRowInfo @getTableRowInfoSplat
-            #--------------------------------------------------------
+            #--------------------------------------------------------------------------------
             if ($pwshTableInfo -eq $false -or $pwshPreviewTableInfo -eq $false) {
                 Write-Warning 'Tables could not be properly queried.'
                 $result = $false
                 return $result
             }
-            #--------------------------------------------------------
+            #--------------------------------------------------------------------------------
             if ($null -eq $pwshTableInfo) {
                 # the table entry has never been created
                 Write-Verbose -Message 'PowerShell release version is newer'
@@ -102,22 +95,7 @@ function Start-PowerShellCheck {
             else {
                 Write-Verbose -Message 'Record was found. PowerShell Version already in table.'
             }
-            #--------------------------------------------------------
-            if ($null -eq $pwshPreviewTableInfo) {
-                # the table entry has never been created
-                Write-Verbose -Message 'PowerShell Preview release version is newer'
-                $newPreviewVersionFound = $true
-                $outPreviewTable = $true
-                $outPreviewFile = $true
-            }
-            else {
-                Write-Verbose -Message 'Record was found. PowerShell Preview Version already in table.'
-            }
-
-            #endregion
-
-            #region PowerShell processing
-
+            #--------------------------------------------------------------------------------
             if ($outTable -eq $true) {
                 Write-Verbose -Message 'New PowerShell version discovered. Adding row entry to table.'
 
@@ -141,7 +119,7 @@ function Start-PowerShellCheck {
             else {
                 Write-Verbose -Message 'No new PowerShell version discovered. No table action taken.'
             }
-            #--------------------------------------------------------
+            #--------------------------------------------------------------------------------
             if ($outFile -eq $true) {
                 $blob = $script:pwsh
                 Write-Verbose -Message 'New PowerShell version discovered. Updating version blob.'
@@ -163,62 +141,7 @@ function Start-PowerShellCheck {
             else {
                 Write-Verbose -Message 'No new PowerShell version discovered. No blob action taken.'
             }
-
-            #endregion
-
-            #region preview processing
-
-            if ($outPreviewTable -eq $true) {
-                Write-Verbose -Message 'New PowerShell preview version discovered. Adding row entry to table.'
-
-                $properties = [ordered]@{
-                    Title = $pwshReleaseInfo.PwshPreviewTitle
-                    Link  = $pwshReleaseInfo.PwshPreviewLink
-                    RC    = $pwshReleaseInfo.PwshPreviewRC
-                }
-
-                $setTablePreviewVersionInfoSplat = @{
-                    PartitionKey = $partitionKeyPreview
-                    RowKey       = $rowKeyPreview
-                    Properties   = $properties
-                }
-                $tableStatus = Set-TableVersionInfo @setTablePreviewVersionInfoSplat
-
-                if ($tableStatus -eq $false) {
-                    $result = $false
-                    return $result
-                }
-            }
-            else {
-                Write-Verbose -Message 'No new PowerShell preview version discovered. No table action taken.'
-            }
-            #--------------------------------------------------------
-            if ($outPreviewFile -eq $true) {
-                $blob = $script:pwshPreview
-                Write-Verbose -Message 'New PowerShell preview version discovered. Updating version blob.'
-                $pwshPreviewOnly = $pwshReleaseInfo | Select-Object PwshPreviewVersion, PwshPreviewTitle, PwshPreviewLink, PwshPreviewRC
-                $psPreviewVersionXML = ConvertTo-Clixml -InputObject $pwshPreviewOnly -Depth 100
-                $psPreviewVersionXML | Out-File -FilePath "$env:TEMP\$blob" -ErrorAction Stop
-
-                $setBlobVersionSplat = @{
-                    Blob  = $blob
-                    File  = "$env:TEMP\$blob"
-                    Force = $true
-                }
-                $blobStatus = Set-BlobVersionInfo @setBlobVersionSplat
-                if ($blobStatus -eq $false) {
-                    $result = $false
-                    return $result
-                }
-            }
-            else {
-                Write-Verbose -Message 'No new PowerShell preview version discovered. No blob action taken.'
-            }
-
-            #endregion
-
-            #region slack notifications
-
+            #--------------------------------------------------------------------------------
             Write-Verbose -Message 'Evaluating slack send requirements...'
             if ($newVersionFound -eq $true) {
                 Write-Verbose -Message 'New pwsh slack message needs sent.'
@@ -230,15 +153,101 @@ function Start-PowerShellCheck {
                 }
                 Send-SlackMessage @slackSplat
             }
-            if ($newPreviewVersionFound -eq $true) {
-                Write-Verbose -Message 'New preview slack message needs sent.'
-                $slackSplatPreview = @{
-                    Text        = $pwshReleaseInfo.PwshPreviewTitle
-                    Title       = 'New PowerShell Preview Release'
-                    Link        = $pwshReleaseInfo.PwshPreviewLink
-                    MessageType = 'PowerShellVersion'
+            #--------------------------------------------------------------------------------
+
+            #endregion
+
+            #region preview version
+
+            if ($null -ne $pwshReleaseInfo.PwshPreviewVersion) {
+                #--------------------------------------------------------------------------------
+                $partitionKeyPreview = $script:pwshPreview
+                $rowKeyPreview = $pwshReleaseInfo.PwshPreviewVersion
+                $getTableRowInfoSplat = @{
+                    PartitionKey = $partitionKeyPreview
+                    RowKey       = $rowKeyPreview
                 }
-                Send-SlackMessage @slackSplatPreview
+                $pwshPreviewTableInfo = Get-TableRowInfo @getTableRowInfoSplat
+                #--------------------------------------------------------------------------------
+                if ($pwshPreviewTableInfo -eq $false) {
+                    Write-Warning 'Table could not be properly queried for preview version.'
+                    $result = $false
+                    return $result
+                }
+                #--------------------------------------------------------------------------------
+                if ($null -eq $pwshPreviewTableInfo) {
+                    # the table entry has never been created
+                    Write-Verbose -Message 'PowerShell Preview release version is newer'
+                    $newPreviewVersionFound = $true
+                    $outPreviewTable = $true
+                    $outPreviewFile = $true
+                }
+                else {
+                    Write-Verbose -Message 'Record was found. PowerShell Preview Version already in table.'
+                }
+                #--------------------------------------------------------------------------------
+                if ($outPreviewTable -eq $true) {
+                    Write-Verbose -Message 'New PowerShell preview version discovered. Adding row entry to table.'
+
+                    $properties = [ordered]@{
+                        Title = $pwshReleaseInfo.PwshPreviewTitle
+                        Link  = $pwshReleaseInfo.PwshPreviewLink
+                        RC    = $pwshReleaseInfo.PwshPreviewRC
+                    }
+
+                    $setTablePreviewVersionInfoSplat = @{
+                        PartitionKey = $partitionKeyPreview
+                        RowKey       = $rowKeyPreview
+                        Properties   = $properties
+                    }
+                    $tableStatus = Set-TableVersionInfo @setTablePreviewVersionInfoSplat
+
+                    if ($tableStatus -eq $false) {
+                        $result = $false
+                        return $result
+                    }
+                }
+                else {
+                    Write-Verbose -Message 'No new PowerShell preview version discovered. No table action taken.'
+                }
+                #--------------------------------------------------------------------------------
+                if ($outPreviewFile -eq $true) {
+                    $blob = $script:pwshPreview
+                    Write-Verbose -Message 'New PowerShell preview version discovered. Updating version blob.'
+                    $pwshPreviewOnly = $pwshReleaseInfo | Select-Object PwshPreviewVersion, PwshPreviewTitle, PwshPreviewLink, PwshPreviewRC
+                    $psPreviewVersionXML = ConvertTo-Clixml -InputObject $pwshPreviewOnly -Depth 100
+                    $psPreviewVersionXML | Out-File -FilePath "$env:TEMP\$blob" -ErrorAction Stop
+
+                    $setBlobVersionSplat = @{
+                        Blob  = $blob
+                        File  = "$env:TEMP\$blob"
+                        Force = $true
+                    }
+                    $blobStatus = Set-BlobVersionInfo @setBlobVersionSplat
+                    if ($blobStatus -eq $false) {
+                        $result = $false
+                        return $result
+                    }
+                }
+                else {
+                    Write-Verbose -Message 'No new PowerShell preview version discovered. No blob action taken.'
+                }
+                #--------------------------------------------------------------------------------
+                Write-Verbose -Message 'Evaluating slack send requirements...'
+                if ($newPreviewVersionFound -eq $true) {
+                    Write-Verbose -Message 'New preview slack message needs sent.'
+                    $slackSplatPreview = @{
+                        Text        = $pwshReleaseInfo.PwshPreviewTitle
+                        Title       = 'New PowerShell Preview Release'
+                        Link        = $pwshReleaseInfo.PwshPreviewLink
+                        MessageType = 'PowerShellVersion'
+                    }
+                    Send-SlackMessage @slackSplatPreview
+                }
+                #--------------------------------------------------------------------------------
+            }
+            else {
+                Write-Verbose -Message 'No preview release was found. Skipping preview processing.'
             }
 
             #endregion

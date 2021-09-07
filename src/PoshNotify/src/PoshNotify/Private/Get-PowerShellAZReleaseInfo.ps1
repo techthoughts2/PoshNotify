@@ -29,6 +29,8 @@ function Get-PowerShellAZReleaseInfo {
 
     $azReleaseInfo = Get-GitHubReleaseInfo -RepositoryName $repoName
 
+    Write-Verbose -Message 'Release Info for AZ:'
+    Write-Verbose ($azReleaseInfo | Out-String)
     if ($null -eq $azReleaseInfo) {
         Write-Warning -Message 'No release information was returned from the GitHub API.'
         return $null
@@ -38,34 +40,45 @@ function Get-PowerShellAZReleaseInfo {
 
     $azReleases = $azReleaseInfo | Where-Object { $_.name -notlike '*Az.*' }
     $azSortedByRelease = $azReleases | Sort-Object { $_.published_at -as [datetime] } -Descending
-    $azPreview = $azSortedByRelease | Where-Object { $_.prerelease -eq $true } | Select-Object -First 1
+
     $az = $azSortedByRelease | Where-Object { $_.prerelease -eq $false } | Select-Object -First 1
-
-    $azPreviewParse = $azPreview.name | Select-String -Pattern $script:versionRegex
-    $azPreviewVersion = $azPreviewParse.Matches.Value
-
     $azParse = $az.name | Select-String -Pattern $script:versionRegex
     $azVersion = $azParse.Matches.Value
 
-    Write-Verbose -Message 'Processing COMPLETE.'
-
-    if ($null -eq $azPreviewVersion) {
-        Send-TelegramError -ErrorMessage 'Get-PowerShellAZReleaseInfo did not parse the preview version number correctly.'
-        return $null
-    }
     if ($null -eq $azVersion) {
         Send-TelegramError -ErrorMessage 'Get-PowerShellAZReleaseInfo did not parse the version number correctly.'
         return $null
     }
 
-    $obj = [PSCustomObject]@{
-        AZVersion        = $azVersion
-        AZTitle          = $az.name
-        AZLink           = $az.html_url
-        AZPreviewVersion = $azPreviewVersion
-        AZPreviewTitle   = $azPreview.name
-        AZPreviewLink    = $azPreview.html_url
+    # release info may - or may not contain a preview release version
+    $azPreview = $azSortedByRelease | Where-Object { $_.prerelease -eq $true } | Select-Object -First 1
+
+    if ($azPreview) {
+        Write-Verbose -Message 'Preview AZ version found. Processing preview'
+        $azPreviewParse = $azPreview.name | Select-String -Pattern $script:versionRegex
+        $azPreviewVersion = $azPreviewParse.Matches.Value
+
+        $obj = [PSCustomObject]@{
+            AZVersion        = $azVersion
+            AZTitle          = $az.name
+            AZLink           = $az.html_url
+            AZPreviewVersion = $azPreviewVersion
+            AZPreviewTitle   = $azPreview.name
+            AZPreviewLink    = $azPreview.html_url
+        }
     }
+    else {
+        $obj = [PSCustomObject]@{
+            AZVersion        = $azVersion
+            AZTitle          = $az.name
+            AZLink           = $az.html_url
+            AZPreviewVersion = $null
+            AZPreviewTitle   = $null
+            AZPreviewLink    = $null
+        }
+    }
+
+    Write-Verbose -Message 'Processing COMPLETE.'
 
     return $obj
 } #Get-PowerShellAZReleaseInfo

@@ -20,7 +20,8 @@ Start-PowerShellBlogCheck [-Force] [-WhatIf] [-Confirm] [<CommonParameters>]
 Evaluates PowerShell rss feed.
 If a blog blob is not found, one will be populated.
 The blog blob will be evaluated against rss information to determine if a new post is available.
-If it is, the blob will be updated and slack messages will be sent.
+If it is, the table will be updated and slack messages will be sent.
+Blob will be updated for most recent post.
 
 ## EXAMPLES
 

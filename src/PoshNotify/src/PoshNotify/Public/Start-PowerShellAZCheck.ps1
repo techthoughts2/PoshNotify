@@ -67,8 +67,9 @@ function Start-PowerShellAZCheck {
 
             #endregion
 
-            #region table checks
+            #region version
 
+            #--------------------------------------------------------------------------------
             # query the table to see if the az version already exists
             $partitionKey = $script:az
             $rowKey = $azReleaseInfo.AZVersion
@@ -77,22 +78,13 @@ function Start-PowerShellAZCheck {
                 RowKey       = $rowKey
             }
             $azTableInfo = Get-TableRowInfo @getTableRowInfoSplat
-            #--------------------------------------------------------
-            # query the table to see if the az PREVIEW version already exists
-            $partitionKeyPreview = $script:azPreview
-            $rowKeyPreview = $azReleaseInfo.AZPreviewVersion
-            $getPreviewTableRowInfoSplat = @{
-                PartitionKey = $partitionKeyPreview
-                RowKey       = $rowKeyPreview
-            }
-            $azPreviewTableInfo = Get-TableRowInfo @getPreviewTableRowInfoSplat
-            #--------------------------------------------------------
-            if ($azTableInfo -eq $false -or $azPreviewTableInfo -eq $false) {
-                Write-Warning 'Tables could not be properly queried.'
+            #--------------------------------------------------------------------------------
+            if ($azTableInfo -eq $false) {
+                Write-Warning 'Table could not be properly queried for version.'
                 $result = $false
                 return $result
             }
-            #--------------------------------------------------------
+            #--------------------------------------------------------------------------------
             if ($null -eq $azTableInfo) {
                 # the table entry has never been created
                 Write-Verbose -Message 'AZ release version is newer'
@@ -103,22 +95,7 @@ function Start-PowerShellAZCheck {
             else {
                 Write-Verbose -Message 'Record was found. AZ Version already in table.'
             }
-            #--------------------------------------------------------
-            if ($null -eq $azPreviewTableInfo) {
-                # the table entry has never been created
-                Write-Verbose -Message 'AZ Preview release version is newer'
-                $newPreviewVersionFound = $true
-                $outPreviewTable = $true
-                $outPreviewFile = $true
-            }
-            else {
-                Write-Verbose -Message 'Record was found. AZ Preview Version already in table.'
-            }
-
-            #endregion
-
-            #region azversion processing
-
+            #--------------------------------------------------------------------------------
             if ($outTable -eq $true) {
                 Write-Verbose -Message 'New az version discovered. Adding row entry to table.'
 
@@ -142,7 +119,7 @@ function Start-PowerShellAZCheck {
             else {
                 Write-Verbose -Message 'No new az version discovered. No table action taken.'
             }
-            #--------------------------------------------------------
+            #--------------------------------------------------------------------------------
             if ($outFile -eq $true) {
                 $blob = $script:az
                 Write-Verbose -Message 'New az version discovered. Updating version blob.'
@@ -164,61 +141,7 @@ function Start-PowerShellAZCheck {
             else {
                 Write-Verbose -Message 'No new az version discovered. No blob action taken.'
             }
-
-            #endregion
-
-            #region preview processing
-
-            if ($outPreviewTable -eq $true) {
-                Write-Verbose -Message 'New az preview version discovered. Adding row entry to table.'
-
-                $properties = [ordered]@{
-                    Title = $azReleaseInfo.AZPreviewTitle
-                    Link  = $azReleaseInfo.AZPreviewLink
-                }
-
-                $setTablePreviewVersionInfoSplat = @{
-                    PartitionKey = $partitionKeyPreview
-                    RowKey       = $rowKeyPreview
-                    Properties   = $properties
-                }
-                $tableStatus = Set-TableVersionInfo @setTablePreviewVersionInfoSplat
-
-                if ($tableStatus -eq $false) {
-                    $result = $false
-                    return $result
-                }
-            }
-            else {
-                Write-Verbose -Message 'No new az preview version discovered. No table action taken.'
-            }
-            #--------------------------------------------------------
-            if ($outPreviewFile -eq $true) {
-                $blob = $script:azPreview
-                Write-Verbose -Message 'New az preview version discovered. Updating version blob.'
-                $azPreviewOnly = $azReleaseInfo | Select-Object AZPreviewVersion, AZPreviewTitle, AZPreviewLink
-                $psVersionXML = ConvertTo-Clixml -InputObject $azPreviewOnly -Depth 100
-                $psVersionXML | Out-File -FilePath "$env:TEMP\$blob" -ErrorAction Stop
-
-                $setBlobVersionSplat = @{
-                    Blob  = $blob
-                    File  = "$env:TEMP\$blob"
-                    Force = $true
-                }
-                $blobStatus = Set-BlobVersionInfo @setBlobVersionSplat
-                if ($blobStatus -eq $false) {
-                    $result = $false
-                    return $result
-                }
-            }
-            else {
-                Write-Verbose -Message 'No new az preview version discovered. No blob action taken.'
-            }
-
-            #endregion
-
-            #region slack notifications
-
+            #--------------------------------------------------------------------------------
             Write-Verbose -Message 'Evaluating slack send requirements...'
             if ($newVersionFound -eq $true) {
                 Write-Verbose -Message 'New az slack message needs sent.'
@@ -230,15 +153,102 @@ function Start-PowerShellAZCheck {
                 }
                 Send-SlackMessage @slackSplat | Out-Null
             }
-            if ($newPreviewVersionFound -eq $true) {
-                Write-Verbose -Message 'New az preview slack message needs sent.'
-                $slackSplat = @{
-                    Text        = $azReleaseInfo.AZPreviewTitle
-                    Title       = 'New AZ Preview PowerShell Release'
-                    Link        = $azReleaseInfo.AZPreviewLink
-                    MessageType = 'PowerShellVersion'
+            #--------------------------------------------------------------------------------
+
+            #endregion
+
+            #region preview version
+
+            if ($null -ne $azReleaseInfo.AZPreviewVersion) {
+                Write-Verbose -Message 'Preview version detected. Processing preview actions...'
+                #--------------------------------------------------------------------------------
+                # query the table to see if the az PREVIEW version already exists
+                $partitionKeyPreview = $script:azPreview
+                $rowKeyPreview = $azReleaseInfo.AZPreviewVersion
+                $getPreviewTableRowInfoSplat = @{
+                    PartitionKey = $partitionKeyPreview
+                    RowKey       = $rowKeyPreview
                 }
-                Send-SlackMessage @slackSplat | Out-Null
+                $azPreviewTableInfo = Get-TableRowInfo @getPreviewTableRowInfoSplat
+                #--------------------------------------------------------------------------------
+                if ($azPreviewTableInfo -eq $false) {
+                    Write-Warning 'Table could not be properly queried for preview version.'
+                    $result = $false
+                    return $result
+                }
+                #--------------------------------------------------------------------------------
+                if ($null -eq $azPreviewTableInfo) {
+                    # the table entry has never been created
+                    Write-Verbose -Message 'AZ Preview release version is newer'
+                    $newPreviewVersionFound = $true
+                    $outPreviewTable = $true
+                    $outPreviewFile = $true
+                }
+                else {
+                    Write-Verbose -Message 'Record was found. AZ Preview Version already in table.'
+                }
+                #--------------------------------------------------------------------------------
+                if ($outPreviewTable -eq $true) {
+                    Write-Verbose -Message 'New az preview version discovered. Adding row entry to table.'
+
+                    $properties = [ordered]@{
+                        Title = $azReleaseInfo.AZPreviewTitle
+                        Link  = $azReleaseInfo.AZPreviewLink
+                    }
+
+                    $setTablePreviewVersionInfoSplat = @{
+                        PartitionKey = $partitionKeyPreview
+                        RowKey       = $rowKeyPreview
+                        Properties   = $properties
+                    }
+                    $tableStatus = Set-TableVersionInfo @setTablePreviewVersionInfoSplat
+
+                    if ($tableStatus -eq $false) {
+                        $result = $false
+                        return $result
+                    }
+                }
+                else {
+                    Write-Verbose -Message 'No new az preview version discovered. No table action taken.'
+                }
+                #--------------------------------------------------------------------------------
+                if ($outPreviewFile -eq $true) {
+                    $blob = $script:azPreview
+                    Write-Verbose -Message 'New az preview version discovered. Updating version blob.'
+                    $azPreviewOnly = $azReleaseInfo | Select-Object AZPreviewVersion, AZPreviewTitle, AZPreviewLink
+                    $psVersionXML = ConvertTo-Clixml -InputObject $azPreviewOnly -Depth 100
+                    $psVersionXML | Out-File -FilePath "$env:TEMP\$blob" -ErrorAction Stop
+
+                    $setBlobVersionSplat = @{
+                        Blob  = $blob
+                        File  = "$env:TEMP\$blob"
+                        Force = $true
+                    }
+                    $blobStatus = Set-BlobVersionInfo @setBlobVersionSplat
+                    if ($blobStatus -eq $false) {
+                        $result = $false
+                        return $result
+                    }
+                }
+                else {
+                    Write-Verbose -Message 'No new az preview version discovered. No blob action taken.'
+                }
+                #--------------------------------------------------------------------------------
+                Write-Verbose -Message 'Evaluating slack send requirements...'
+                if ($newPreviewVersionFound -eq $true) {
+                    Write-Verbose -Message 'New az preview slack message needs sent.'
+                    $slackSplat = @{
+                        Text        = $azReleaseInfo.AZPreviewTitle
+                        Title       = 'New AZ Preview PowerShell Release'
+                        Link        = $azReleaseInfo.AZPreviewLink
+                        MessageType = 'PowerShellVersion'
+                    }
+                    Send-SlackMessage @slackSplat | Out-Null
+                }
+                #--------------------------------------------------------------------------------
+            }
+            else {
+                Write-Verbose -Message 'No preview release was found. Skipping preview processing.'
             }
 
             #endregion

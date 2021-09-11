@@ -16,8 +16,7 @@ IsLatestVersion                    :
 AccessTier                         : Hot
 TagCount                           : 0
 Tags                               :
-Context                            : Microsoft.WindowsAzure.Commands.Storage.AzureStorageContex
-                                     t
+Context                            : Microsoft.WindowsAzure.Commands.Storage.AzureStorageContext
 Name                               : test123
 #>
 #-------------------------------------------------------------------------
@@ -31,27 +30,28 @@ if (Get-Module -Name $ModuleName -ErrorAction 'SilentlyContinue') {
     Remove-Module -Name $ModuleName -Force
 }
 Import-Module $PathToManifest -Force
-Import-Module 'Az.Storage'
-#-------------------------------------------------------------------------
-$WarningPreference = 'SilentlyContinue'
-#-------------------------------------------------------------------------
-#Import-Module $moduleNamePath -Force
+Import-Module 'Az.Storage' -Force
 
 InModuleScope 'PoshNotify' {
     #-------------------------------------------------------------------------
     $WarningPreference = 'SilentlyContinue'
-    $ErrorActionPreference = 'SilentlyContinue'
     #-------------------------------------------------------------------------
+    BeforeAll {
+        $WarningPreference = 'SilentlyContinue'
+        $ErrorActionPreference = 'SilentlyContinue'
+    }
     function Send-TelegramError {
     }
-    $Blob = 'test'
-    $file = 'c:\test.log'
-    $context = [Microsoft.WindowsAzure.Commands.Common.Storage.AzureStorageContext]::EmptyContextInstance
-    $env:RESOURCE_GROUP = 'rgn'
-    $env:STORAGE_ACCOUNT_NAME = 'san'
-    $env:CONTAINER_NAME = 'xxxxxxxxxx/default/cn'
+
     Context 'Set-BlobVersionInfo' {
         BeforeEach {
+            $Blob = 'test'
+            $file = 'c:\test.log'
+            $context = [Microsoft.WindowsAzure.Commands.Common.Storage.AzureStorageContext]::EmptyContextInstance
+            $env:RESOURCE_GROUP = 'rgn'
+            $env:STORAGE_ACCOUNT_NAME = 'san'
+            $env:CONTAINER_NAME = 'xxxxxxxxxx/default/cn'
+
             Mock -CommandName Get-StorageInfo -MockWith {
                 [PSCustomObject]@{
                     ResourceGroupName           = 'rgn'
@@ -119,38 +119,40 @@ InModuleScope 'PoshNotify' {
             } #endMock
         } #beforeeach
         Context 'ShouldProcess' {
-            Mock -CommandName Set-BlobVersionInfo -MockWith { }#endMock
+            BeforeEach {
+                Mock -CommandName Set-BlobVersionInfo -MockWith { } #endMock
+            }
             It 'Should process by default' {
                 Set-BlobVersionInfo -Blob $Blob -File $file
                 Assert-MockCalled Set-BlobVersionInfo -Scope It -Exactly -Times 1
-            }#it
+            } #it
             It 'Should not process on explicit request for confirmation (-Confirm)' {
                 { Set-BlobVersionInfo -Blob $Blob -File $file -Confirm }
                 Assert-MockCalled Set-BlobVersionInfo -Scope It -Exactly -Times 0
-            }#it
+            } #it
             It 'Should not process on implicit request for confirmation (ConfirmPreference)' {
                 {
                     $ConfirmPreference = 'Medium'
                     Set-BlobVersionInfo -Blob $Blob -File $file
                 }
                 Assert-MockCalled Set-BlobVersionInfo -Scope It -Exactly -Times 0
-            }#it
+            } #it
             It 'Should not process on explicit request for validation (-WhatIf)' {
                 { Set-BlobVersionInfo -Blob $Blob -File $file -WhatIf }
                 Assert-MockCalled Set-BlobVersionInfo -Scope It -Exactly -Times 0
-            }#it
+            } #it
             It 'Should not process on implicit request for validation (WhatIfPreference)' {
                 {
                     $WhatIfPreference = $true
                     Set-BlobVersionInfo -Blob $Blob -File $file
                 }
                 Assert-MockCalled Set-BlobVersionInfo -Scope It -Exactly -Times 0
-            }#it
+            } #it
             It 'Should process on force' {
                 $ConfirmPreference = 'Medium'
                 Set-BlobVersionInfo -Blob $Blob -File $file -Force
                 Assert-MockCalled Set-BlobVersionInfo -Scope It -Exactly -Times 1
-            }#it
+            } #it
         } #context
         Context 'Error' {
             It 'should return false if an error is encountered uploading the blob' {

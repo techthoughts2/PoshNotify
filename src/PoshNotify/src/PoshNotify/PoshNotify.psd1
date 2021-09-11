@@ -12,7 +12,7 @@
     RootModule        = 'PoshNotify.psm1'
 
     # Version number of this module.
-    ModuleVersion     = '0.9.7'
+    ModuleVersion     = '0.12.0'
 
     # Supported PSEditions
     # CompatiblePSEditions = @()
@@ -30,7 +30,7 @@
     Copyright         = '(c) Jake Morrison. All rights reserved.'
 
     # Description of the functionality provided by this module
-    Description       = 'Retrieves PowerShell information and sends notifications.'
+    Description       = 'Retrieves various information regarding PowerShell and sends slacks notifications keeping group memebers up to date.'
 
     # Minimum version of the PowerShell engine required by this module
     # PowerShellVersion = ''
@@ -52,9 +52,10 @@
 
     # Modules that must be imported into the global environment prior to importing this module
     RequiredModules   = @(
-        'Convert',
-        'Az.Accounts',
+        'Convert'
+        'Az.Accounts'
         'Az.Storage'
+        'AzTable'
     )
 
     # Assemblies that must be loaded prior to importing this module
@@ -78,6 +79,7 @@
         'Start-PowerShellBlogCheck'
         'Start-PowerShellCheck'
         'Start-PowerShellRedditCheck'
+        'Start-PSScriptAnalyzerCheck'
     )
 
     # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.

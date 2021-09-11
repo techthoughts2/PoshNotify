@@ -72,6 +72,9 @@ output storageAccountID string = PoshNotifyResources.outputs.storageAccountID
 output containerName string = PoshNotifyResources.outputs.containerName
 output containerID string = PoshNotifyResources.outputs.containerID
 
+output tableName string = PoshNotifyResources.outputs.tableName
+output tableID string = PoshNotifyResources.outputs.tableID
+
 output keyVaultName string = PoshNotifyResources.outputs.keyVaultName
 output keyVaultID string = PoshNotifyResources.outputs.keyVaultID
 
@@ -89,3 +92,6 @@ output saPermID string = PoshNotifyResources.outputs.saPermID
 
 output conPermName string = PoshNotifyResources.outputs.conPermName
 output conPermID string = PoshNotifyResources.outputs.conPermID
+
+// output tablePermName string = PoshNotifyResources.outputs.tablePermName
+// output tablePermID string = PoshNotifyResources.outputs.tablePermID

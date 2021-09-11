@@ -25,6 +25,8 @@
     None
 .NOTES
     Invoke-RestMethod
+
+    Jake Morrison - @jakemorrison - https://www.techthoughts.info
 .LINK
     https://app.slack.com/block-kit-builder
 .LINK
@@ -52,7 +54,7 @@ function Send-SlackMessage {
         [ValidateSet('PowerShellVersion', 'PowerShellBlog', 'PowerShellReddit')]
         [string]$MessageType,
         [Parameter(Mandatory = $false,
-            HelpMessage = 'TBD')]
+            HelpMessage = 'PoshNotify')]
         [ValidateNotNullOrEmpty()]
         [psobject]$RedditObj
     )

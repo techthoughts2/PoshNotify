@@ -18,8 +18,11 @@
 .OUTPUTS
     System.Management.Automation.PSCustomObject
 .NOTES
+    Get-StorageInfo
     Get-AzStorageBlobContent
     Get-Content
+
+    Jake Morrison - @jakemorrison - https://www.techthoughts.info
 .COMPONENT
     PoshNotify
 #>

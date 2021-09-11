@@ -2,7 +2,7 @@
 
 main | dev
 --- | --- |
-![PoshNotify Azure DevOps](https://dev.azure.com/techthoughtsdevops/PoshNotify/_apis/build/status/PoshNotify?branchName=main) | ![PoshNotify Azure DevOps](https://dev.azure.com/techthoughtsdevops/PoshNotify/_apis/build/status/PoshNotify-Dev?branchName=dev)
+![PoshNotify Azure DevOps](https://dev.azure.com/JakeMorrison/PoshNotify/_apis/build/status/PoshNotify-Main?branchName=main) | ![PoshNotify Azure DevOps](https://dev.azure.com/JakeMorrison/PoshNotify/_apis/build/status/PoshNotify-Dev?branchName=dev)
 
 ## Synopsis
 
@@ -24,18 +24,20 @@ What can you learn by looking over this project?
 - How to build a custom [PowerShell module](https://docs.microsoft.com/powershell/scripting/developer/module/writing-a-windows-powershell-module?view=powershell-7.1) during the CI/CD process that is intended for use inside your [Azure Functions]((https://docs.microsoft.com/azure/azure-functions/))
 - How to have your PowerShell functions leverage public modules on the PSGallery
 - How to deploy Azure resources using [Bicep](https://github.com/Azure/bicep)
+  - How to store various secrets (such as Storage Access Keys) in Azure Key Vault during the bicep deployment process
+- How to assign permissions to enable your Azure PowerShell Functions to do things like:
+  - Get secrets from Azure Key Vault (slack webhook, SA connection strings)
+  - Write information to blob storage
+  - Write and read to Azure Table Storage
+  - Generate Application Insights information
 - How to run [Azure DevOps on a self hosted pool](https://docs.microsoft.com/azure/devops/pipelines/agents/v2-windows?view=azure-devops)
 - How to format an [Azure DevOps yaml file](https://docs.microsoft.com/azure/devops/pipelines/)
 - How to use PowerShell in an Azure DevOps pipeline deployment
-- How to use [Pester](https://github.com/pester/Pester) in an Azure DevOps pipeline
+- How to use [Pester](https://github.com/pester/Pester) 5 in an Azure DevOps pipeline
 - How to publish test results for beautiful graphs in Azure DevOps
 - How to publish code coverage for beautiful graphs in Azure DevOps
 - How to deploy a separate Dev and Prod stack using Azure DevOps
 - How to properly build and structure Azure PowerShell Functions
-- How to assign permissions to enable your Azure PowerShell Functions to do things like
-  - Get secrets from Azure Key Vault (slack webhook)
-  - Write information to blob storage
-  - Generate Application Insights information
 
 ### PoshNotify High Level Design
 

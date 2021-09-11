@@ -9,46 +9,46 @@ if (Get-Module -Name $ModuleName -ErrorAction 'SilentlyContinue') {
     Remove-Module -Name $ModuleName -Force
 }
 Import-Module $PathToManifest -Force
-#-------------------------------------------------------------------------
-$WarningPreference = 'SilentlyContinue'
-#-------------------------------------------------------------------------
-#Import-Module $moduleNamePath -Force
 
 InModuleScope 'PoshNotify' {
     #-------------------------------------------------------------------------
-    # $WarningPreference = 'SilentlyContinue'
-    # $ErrorActionPreference = 'SilentlyContinue'
+    $WarningPreference = 'SilentlyContinue'
     #-------------------------------------------------------------------------
+    BeforeAll {
+        $WarningPreference = 'SilentlyContinue'
+        $ErrorActionPreference = 'SilentlyContinue'
+    }
     Context 'Start-PowerShellRedditCheck' {
-        function Send-SlackMessage {
-        }
-        $redditInfo = [System.Collections.ArrayList]@()
-        $obj1 = [PSCustomObject]@{
-            Title = 'Proud noob moment'
-            URL   = 'https://www.reddit.com/r/PowerShell/comment'
-        }
-        $obj2 = [PSCustomObject]@{
-            Title = 'Network Troubleshooting w/ PowerShell'
-            URL   = 'https://youtu.be/s-Ba4chiNh4'
-        }
-        $obj3 = [PSCustomObject]@{
-            Title = 'Audit Office 365 External Sharing Activities - Never Allow the Resources Fall into Wrong Hands'
-            URL   = 'https://www.reddit.com/r/Office365/'
-        }
-        $obj4 = [PSCustomObject]@{
-            Title = 'IE11 desktop app retirement - June 15, 2022'
-            URL   = 'https://www.reddit.com/r/PowerShell/comment'
-        }
-        $obj5 = [PSCustomObject]@{
-            Title = 'I like making dumb little games in PowerShell. My latest is Hangman. Clues sourced from Wheel of Fortune.'
-            URL   = 'https://www.reddit.com/r/PowerShell/comment'
-        }
-        $redditInfo.Add($obj1) | Out-Null
-        $redditInfo.Add($obj2) | Out-Null
-        $redditInfo.Add($obj3) | Out-Null
-        $redditInfo.Add($obj4) | Out-Null
-        $redditInfo.Add($obj5) | Out-Null
         BeforeEach {
+            function Send-SlackMessage {
+            }
+            $redditInfo = [System.Collections.ArrayList]@()
+            $obj1 = [PSCustomObject]@{
+                Title = 'Proud noob moment'
+                URL   = 'https://www.reddit.com/r/PowerShell/comment'
+            }
+            $obj2 = [PSCustomObject]@{
+                Title = 'Network Troubleshooting w/ PowerShell'
+                URL   = 'https://youtu.be/s-Ba4chiNh4'
+            }
+            $obj3 = [PSCustomObject]@{
+                Title = 'Audit Office 365 External Sharing Activities - Never Allow the Resources Fall into Wrong Hands'
+                URL   = 'https://www.reddit.com/r/Office365/'
+            }
+            $obj4 = [PSCustomObject]@{
+                Title = 'IE11 desktop app retirement - June 15, 2022'
+                URL   = 'https://www.reddit.com/r/PowerShell/comment'
+            }
+            $obj5 = [PSCustomObject]@{
+                Title = 'I like making dumb little games in PowerShell. My latest is Hangman. Clues sourced from Wheel of Fortune.'
+                URL   = 'https://www.reddit.com/r/PowerShell/comment'
+            }
+            $redditInfo.Add($obj1) | Out-Null
+            $redditInfo.Add($obj2) | Out-Null
+            $redditInfo.Add($obj3) | Out-Null
+            $redditInfo.Add($obj4) | Out-Null
+            $redditInfo.Add($obj5) | Out-Null
+
             Mock -CommandName Get-Reddit -MockWith {
                 $redditInfo
             } #endMock
@@ -57,38 +57,40 @@ InModuleScope 'PoshNotify' {
             # } #endMock
         } #beforeeach
         Context 'ShouldProcess' {
-            Mock -CommandName Start-PowerShellRedditCheck -MockWith { } #endMock
+            BeforeEach {
+                Mock -CommandName Start-PowerShellRedditCheck -MockWith { } #endMock
+            } #beforeEach
             It 'Should process by default' {
                 Start-PowerShellRedditCheck
                 Assert-MockCalled Start-PowerShellRedditCheck -Scope It -Exactly -Times 1
-            }#it
+            } #it
             It 'Should not process on explicit request for confirmation (-Confirm)' {
                 { Start-PowerShellRedditCheck }
                 Assert-MockCalled Start-PowerShellRedditCheck -Scope It -Exactly -Times 0
-            }#it
+            } #it
             It 'Should not process on implicit request for confirmation (ConfirmPreference)' {
                 {
                     $ConfirmPreference = 'Medium'
                     Start-PowerShellRedditCheck
                 }
                 Assert-MockCalled Start-PowerShellRedditCheck -Scope It -Exactly -Times 0
-            }#it
+            } #it
             It 'Should not process on explicit request for validation (-WhatIf)' {
                 { Start-PowerShellRedditCheck }
                 Assert-MockCalled Start-PowerShellRedditCheck -Scope It -Exactly -Times 0
-            }#it
+            } #it
             It 'Should not process on implicit request for validation (WhatIfPreference)' {
                 {
                     $WhatIfPreference = $true
                     Start-PowerShellRedditCheck
                 }
                 Assert-MockCalled Start-PowerShellRedditCheck -Scope It -Exactly -Times 0
-            }#it
+            } #it
             It 'Should process on force' {
                 $ConfirmPreference = 'Medium'
                 Start-PowerShellRedditCheck
                 Assert-MockCalled Start-PowerShellRedditCheck -Scope It -Exactly -Times 1
-            }#it
+            } #it
         } #context
         Context 'Error' {
             It 'should return false if no Powershell reddit information is found' {

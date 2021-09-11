@@ -23,6 +23,8 @@
 .NOTES
     Set-AzStorageBlobContent
     Test-Path
+
+    Jake Morrison - @jakemorrison - https://www.techthoughts.info
 .COMPONENT
     PoshNotify
 #>
@@ -104,7 +106,7 @@ function Set-BlobVersionInfo {
                 return $result
             }
 
-        }#if_Should
+        } #if_Should
 
     }
 

@@ -9,21 +9,21 @@ if (Get-Module -Name $ModuleName -ErrorAction 'SilentlyContinue') {
     Remove-Module -Name $ModuleName -Force
 }
 Import-Module $PathToManifest -Force
-Import-Module 'Az.Storage'
-#-------------------------------------------------------------------------
-$WarningPreference = 'SilentlyContinue'
-#-------------------------------------------------------------------------
-#Import-Module $moduleNamePath -Force
+Import-Module 'Az.Storage' -Force
 
 InModuleScope 'PoshNotify' {
     #-------------------------------------------------------------------------
     $WarningPreference = 'SilentlyContinue'
-    $ErrorActionPreference = 'SilentlyContinue'
     #-------------------------------------------------------------------------
-    function Send-TelegramTextMessage {
+    BeforeAll {
+        $WarningPreference = 'SilentlyContinue'
+        $ErrorActionPreference = 'SilentlyContinue'
     }
+
     Context 'Send-TelegramError' {
         BeforeEach {
+            function Send-TelegramTextMessage {
+            }
             Mock -CommandName Send-TelegramTextMessage -MockWith {
                 [PSCustomObject]@{
                     ok     = 'True'
@@ -42,7 +42,7 @@ InModuleScope 'PoshNotify' {
         } #context-error
         Context 'Success' {
             It 'should not throw if successful' {
-                { Send-TelegramError -ErrorMessage 'Error' } | Should Not Throw
+                { Send-TelegramError -ErrorMessage 'Error' } | Should -Not -Throw
             } #it
         } #context-success
     } #context

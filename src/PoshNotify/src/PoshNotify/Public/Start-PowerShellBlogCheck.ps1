@@ -2,7 +2,7 @@
 .SYNOPSIS
     Evaluates if a new PowerShell blog post has been published and sends slack messages notifying of the post.
 .DESCRIPTION
-    Evaluates PowerShell rss feed. If a blog blob is not found, one will be populated. The blog blob will be evaluated against rss information to determine if a new post is available. If it is, the blob will be updated and slack messages will be sent.
+    Evaluates PowerShell rss feed. If a blog blob is not found, one will be populated. The blog blob will be evaluated against rss information to determine if a new post is available. If it is, the table will be updated and slack messages will be sent. Blob will be updated for most recent post.
 .EXAMPLE
     Start-PowerShellBlogCheck
 
@@ -11,6 +11,8 @@
     None
 .NOTES
     This took a lot longer to make than I thought it would.
+
+    Jake Morrison - @jakemorrison - https://www.techthoughts.info
 .COMPONENT
     PoshNotify
 #>
@@ -36,52 +38,117 @@ function Start-PowerShellBlogCheck {
 
         Write-Verbose -Message ('[{0}] Confirm={1} ConfirmPreference={2} WhatIf={3} WhatIfPreference={4}' -f $MyInvocation.MyCommand, $Confirm, $ConfirmPreference, $WhatIf, $WhatIfPreference)
 
-    }#begin
+    } #begin
     Process {
         $result = $true #assume the best
         # -Confirm --> $ConfirmPreference = 'Low'
         # ShouldProcess intercepts WhatIf* --> no need to pass it on
 
-        $newBlogFound = $false
-        $outFile = $false
-
         if ($Force -or $PSCmdlet.ShouldProcess("ShouldProcess?")) {
             Write-Verbose -Message ('[{0}] Reached command' -f $MyInvocation.MyCommand)
             $ConfirmPreference = 'None'
 
-            #--------------------------------------------------------
+            #region current rss information
+
             # get the current rss information
             $powerShellBlogInfo = Get-PowerShellBlogInfo
             if ($null -eq $powerShellBlogInfo) {
                 $result = $false
                 return $result
             }
-            #--------------------------------------------------------
-            # get the PowerShell blog info from the blob for comparison
-            $powerShellBlobBlogInfo = Get-BlobVersionInfo -Blob $script:psBlogData
-            switch ($powerShellBlobBlogInfo) {
-                $false {
-                    # the blob has never been created
-                    $outFile = $true
+
+            #endregion
+
+            $outFile = $false # only 1 file is output - the latest post
+            foreach ($post in $powerShellBlogInfo) {
+                # resets
+                $partitionKey = $script:psBlogData
+                $rowKey = $null
+                $getTableRowInfoSplat = $null
+                $postTableInfo = $null
+                $newBlogFound = $false
+
+                $outTable = $false
+
+                #region table checks
+
+                # query the table to see if the post already exists
+                $rowKey = $post.GUID
+                $getTableRowInfoSplat = @{
+                    PartitionKey = $partitionKey
+                    RowKey       = $rowKey
                 }
-                $null {
-                    # error was encountered
-                    Write-Verbose -Message 'Unable to determine version change. No action taken.'
+                $postTableInfo = Get-TableRowInfo @getTableRowInfoSplat
+                #--------------------------------------------------------
+                if ($postTableInfo -eq $false) {
+                    Write-Warning 'Table could not be properly queried.'
                     $result = $false
                     return $result
                 }
-                Default {
-                    if ([datetime]$powerShellBlogInfo.Date -gt [datetime]$powerShellBlobBlogInfo.Date) {
-                        Write-Verbose -Message 'Blog post is newer.'
-                        $newBlogFound = $true
-                        $outFile = $true
+                #--------------------------------------------------------
+                if ($null -eq $postTableInfo) {
+                    # the table entry has never been created
+                    Write-Verbose -Message ('Post is newer - {0}' -f $post.Title)
+                    $newBlogFound = $true
+                    $outTable = $true
+                    $outFile = $true
+                }
+                else {
+                    Write-Verbose -Message 'Record was found. PowerShell post is already in table.'
+                }
+
+                #endregion
+
+                #region post processing
+
+                if ($outTable -eq $true) {
+                    Write-Verbose -Message 'New PowerShell post discovered. Adding row entry to table.'
+
+                    $properties = [ordered]@{
+                        Title   = $post.title
+                        Link    = $post.link
+                        PubDate = $post.pubDate
+                    }
+
+                    $setTableVersionInfoSplat = @{
+                        PartitionKey = $partitionKey
+                        RowKey       = $rowKey
+                        Properties   = $properties
+                    }
+                    $tableStatus = Set-TableVersionInfo @setTableVersionInfoSplat
+
+                    if ($tableStatus -eq $false) {
+                        $result = $false
+                        return $result
                     }
                 }
-            }
+                else {
+                    Write-Verbose -Message 'No new PowerShell post discovered. No table action taken.'
+                }
+                #--------------------------------------------------------
+                Write-Verbose -Message 'Evaluating slack send requirements...'
+                if ($newBlogFound -eq $true) {
+                    Write-Verbose -Message 'New blog post slack message needs sent.'
+                    $slackSplatPreview = @{
+                        Text        = $post.title
+                        Title       = 'New PowerShell Blog Posted'
+                        Link        = $post.link
+                        MessageType = 'PowerShellBlog'
+                    }
+                    Send-SlackMessage @slackSplatPreview
+                }
+                #--------------------------------------------------------
+
+                #endregion
+
+            } #foreach_post
+
             #--------------------------------------------------------
             if ($outFile -eq $true) {
+                # only blob update the most recent blog post
+                $mostRecentPwshPost = $powerShellBlogInfo | Sort-Object guid -Descending | Select-Object -First 1
                 Write-Verbose -Message 'New blog post discovered. Updating blog blob.'
-                $psBlogXML = ConvertTo-Clixml -InputObject $powerShellBlogInfo -Depth 100
+                $psBlogXML = ConvertTo-Clixml -InputObject $mostRecentPwshPost -Depth 100
                 $psBlogXML | Out-File -FilePath "$env:TEMP\$script:psBlogData" -ErrorAction Stop
 
                 $setBlobVersionSplat = @{
@@ -98,19 +165,7 @@ function Start-PowerShellBlogCheck {
             else {
                 Write-Verbose -Message 'No new blog post discovered. No action taken.'
             }
-            #--------------------------------------------------------
-            Write-Verbose -Message 'Evaluating slack send requirements...'
-            if ($newBlogFound -eq $true) {
-                Write-Verbose -Message 'New blog post slack message needs sent.'
-                $slackSplatPreview = @{
-                    Text        = $powerShellBlogInfo.Title
-                    Title       = 'New PowerShell Blog Posted'
-                    Link        = $powerShellBlogInfo.Link
-                    MessageType = 'PowerShellBlog'
-                }
-                Send-SlackMessage @slackSplatPreview
-            }
-            #--------------------------------------------------------
+
         } #if_Should
     } #process
     End {

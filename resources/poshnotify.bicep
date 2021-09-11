@@ -151,6 +151,7 @@ resource storageaccount 'Microsoft.Storage/storageaccounts@2021-02-01' = {
     //   isNfsV3Enabled: bool
   }
   // https://docs.microsoft.com/en-us/azure/templates/microsoft.storage/storageaccounts/blobservices/containers?tabs=bicep
+  // https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/child-resource-name-type
   resource blobcontainer 'blobServices' = {
     name: 'default'
     dependsOn: [
@@ -163,6 +164,27 @@ resource storageaccount 'Microsoft.Storage/storageaccounts@2021-02-01' = {
       // metadata: {}
     }
     // resources: []
+  }
+  // https://docs.microsoft.com/en-us/azure/templates/microsoft.storage/storageaccounts/tableservices?tabs=bicep
+  // https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/child-resource-name-type
+  resource tableService 'tableServices' = {
+    name: 'default'
+    dependsOn: [
+      storageaccount
+    ]
+    properties: {
+      // cors: {
+      //   corsRules: [
+      //     {
+      //       allowedHeaders: [ 'string' ]
+      //       allowedMethods: [ 'string' ]
+      //       allowedOrigins: [ 'string' ]
+      //       exposedHeaders: [ 'string' ]
+      //       maxAgeInSeconds: int
+      //     }
+      //   ]
+      // }
+    }
   }
 }
 
@@ -179,6 +201,11 @@ resource container 'Microsoft.Storage/storageAccounts/blobServices/containers@20
     // metadata: {}
   }
   // resources: []
+}
+
+// https://docs.microsoft.com/en-us/azure/templates/microsoft.storage/storageaccounts/tableservices/tables?tabs=bicep
+resource versiontable 'Microsoft.Storage/storageAccounts/tableServices/tables@2021-04-01' = {
+  name: '${storageaccount.name}/default/versiontable'
 }
 
 // https://docs.microsoft.com/en-us/azure/templates/microsoft.keyvault/vaults?tabs=bicep
@@ -248,6 +275,13 @@ resource keyvault 'Microsoft.KeyVault/vaults@2019-09-01' = {
     //   }
   }
   // https://docs.microsoft.com/en-us/azure/templates/microsoft.keyvault/vaults/secrets?tabs=bicep
+  // https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/child-resource-name-type
+  resource storageSecret 'secrets' = {
+    name: 'sa-connectionstring'
+    properties: {
+      value: 'DefaultEndpointsProtocol=https;AccountName=${storageaccount.name};AccountKey=${listKeys(storageaccount.id, storageaccount.apiVersion).keys[1].value}'
+    }
+  }
   // resource slackSecret 'secrets' = {
   //   name: secretName
   //   tags: {
@@ -605,6 +639,8 @@ resource functionapp 'Microsoft.Web/sites@2020-12-01' = {
 
   // https://docs.microsoft.com/en-us/azure/templates/microsoft.web/sites/config-appsettings?tabs=bicep
   // https://docs.microsoft.com/en-us/azure/azure-functions/functions-app-settings
+  // https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/child-resource-name-type
+    // connection string references child resource secret from keyvault
   resource functionSettings 'config' = {
     name: 'appsettings'
     dependsOn: [
@@ -619,12 +655,15 @@ resource functionapp 'Microsoft.Web/sites@2020-12-01' = {
       'AzureWebJobsStorage': 'DefaultEndpointsProtocol=https;AccountName=${storageaccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageaccount.id, storageaccount.apiVersion).keys[0].value}'
       'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING': 'DefaultEndpointsProtocol=https;AccountName=${storageaccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageaccount.id, storageaccount.apiVersion).keys[0].value}'
       'WEBSITE_CONTENTSHARE': functionapp.name
+      'SA_CONNECTION_STRING': '@Microsoft.KeyVault(SecretUri=https://${keyvault.name}.vault.azure.net/secrets/${keyvault::storageSecret.name}/)'
       'SLACK_ENDPOINT': '@Microsoft.KeyVault(SecretUri=https://${keyvault.name}.vault.azure.net/secrets/slack-${environmentType}/)'
       'TOKEN': '@Microsoft.KeyVault(SecretUri=https://${keyvault.name}.vault.azure.net/secrets/tttoken/)'
       'CHANNEL': '@Microsoft.KeyVault(SecretUri=https://${keyvault.name}.vault.azure.net/secrets/ttchannel/)'
+      'GITHUB_API_TOKEN': '@Microsoft.KeyVault(SecretUri=https://${keyvault.name}.vault.azure.net/secrets/githubapitoken/)'
       'CONTAINER_NAME': container.name
       'RESOURCE_GROUP': '${projectName}-${environmentType}'
       'STORAGE_ACCOUNT_NAME': storageaccount.name
+      'TABLE_NAME': versiontable.properties.tableName
       'STAGE': environmentType
     }
   }
@@ -705,6 +744,24 @@ resource containerPermission 'Microsoft.Authorization/roleAssignments@2020-04-01
   }
 }
 
+// b24988ac-6180-42a0-ab88-20f7382dd24c - Contributor
+// 0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3 - Storage Table Data Contributor
+// Allows for read, write and delete access to Azure Storage tables and entities
+// https://docs.microsoft.com/en-us/azure/templates/microsoft.authorization/roleassignments?tabs=bicep
+// resource versiontablePermission 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+//   name: guid(projectName, uniqueResourceNameBase_var, subscription().subscriptionId)
+//   scope: versiontable
+//   properties: {
+//     roleDefinitionId: '${subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3')}'
+//     principalId: reference(functionapp.id, '2019-08-01', 'full').identity.principalId
+//     // principalType: 'string'
+//     // description: 'string'
+//     // condition: 'string'
+//     // conditionVersion: 'string'
+//     // delegatedManagedIdentityResourceId: 'string'
+//   }
+// }
+
 // ---------
 // Outputs
 // ---------
@@ -714,6 +771,9 @@ output storageAccountID string = storageaccount.id
 
 output containerName string = container.name
 output containerID string = container.id
+
+output tableName string = versiontable.name
+output tableID string = versiontable.id
 
 output keyVaultName string = keyvault.name
 output keyVaultID string = keyvault.id
@@ -733,3 +793,6 @@ output saPermID string = storageAccountReadPermission.id
 
 output conPermName string = containerPermission.name
 output conPermID string = containerPermission.id
+
+// output tablePermName string = versiontablePermission.name
+// output tablePermID string = versiontablePermission.id

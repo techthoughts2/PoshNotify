@@ -23,17 +23,17 @@ InModuleScope 'PoshNotify' {
             <#
             It 'should ...' {
 
-            }#it
+            } #it
             #>
-        }#context_FunctionName
-    }#describe_PrivateFunctions
+        } #context_FunctionName
+    } #describe_PrivateFunctions
     Describe 'PoshNotify Public Function Tests' -Tag Unit {
         Context 'FunctionName' {
             <#
                 It 'should ...' {
 
-                }#it
+                } #it
                 #>
-        }#context_FunctionName
-    }#describe_testFunctions
-}#inModule
+        } #context_FunctionName
+    } #describe_testFunctions
+} #inModule

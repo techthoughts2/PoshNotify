@@ -13,7 +13,7 @@ function Send-TelegramError {
     )
     $message = '\\\ Project PoshNotify - {0} - {1}' -f $env:STAGE, $ErrorMessage
     try {
-        Send-TelegramTextMessage -BotToken $env:TOKEN -ChatID $env:CHANNEL -Message $message
+        Send-TelegramTextMessage -BotToken $env:TOKEN -ChatID $env:CHANNEL -Message $message | Out-Null
     }
     catch {
         Write-Error $_

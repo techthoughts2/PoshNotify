@@ -79,6 +79,8 @@ stages:
               Install-Module -Name Convert -Repository PSGallery -SkipPublisherCheck -Force
               Install-Module -Name Az.Accounts -Repository PSGallery -SkipPublisherCheck -Force
               Install-Module -Name Az.Storage -Repository PSGallery -SkipPublisherCheck -Force
+              Install-Module -Name AzTable -Repository PSGallery -SkipPublisherCheck -Force
+              Install-Module -Name Az.Resources -Repository PSGallery -SkipPublisherCheck -Force
 
   - stage: PoshNotifyModuleTestandBuild
     displayName: Posh Notify Module Build
@@ -98,7 +100,7 @@ stages:
             env:
               WORKING_DIRECTORY: $(System.DefaultWorkingDirectory)
           # Pester test the module - generate test result file and code coverage file
-          - task: Pester@9
+          - task: Pester@10
             inputs:
               scriptFolder: '$(System.DefaultWorkingDirectory)\src\PoshNotify\src\Tests\*'
               resultsFile: '$(System.DefaultWorkingDirectory)\Test-Pester.XML'
@@ -106,7 +108,7 @@ stages:
               CodeCoverageFolder: '$(System.DefaultWorkingDirectory)\src\PoshNotify\src\PoshNotify'
               usePSCore: true
               PesterVersion: 'OtherVersion'
-              preferredPesterVersion: '4.10.1'
+              preferredPesterVersion: '5.3.0'
               failOnStdErr: false
           # publish the test results for pretty graphs in Azure DevOps
           - task: PublishTestResults@2
@@ -248,12 +250,14 @@ stages:
                 # optional step that is useful for debugging to see if you got the correct outputs
                 - pwsh: |
                     Write-Host "STORAGE_ACCOUNT_NAME: $env:STORAGE_ACCOUNT_NAME"
+                    Write-Host "TABLE_NAME: $env:TABLE_NAME"
                     Write-Host "KEY_VAULT_NAME: $env:KEY_VAULT_NAME"
                     Write-Host "PLAN_NAME: $env:PLAN_NAME"
                     Write-Host "FUNCTION_APP_NAME: $env:FUNCTION_APP_NAME"
                     Write-Host "APP_INSIGHTS_NAME: $env:APP_INSIGHTS_NAME"
                   env:
                     STORAGE_ACCOUNT_NAME: $(storageAccountName)
+                    TABLE_NAME: $(tableName)
                     KEY_VAULT_NAME: $(keyVaultName)
                     PLAN_NAME: $(planName)
                     FUNCTION_APP_NAME: $(functionAppName)
@@ -330,12 +334,14 @@ stages:
                 # optional step that is useful for debugging to see if you got the correct outputs
                 - pwsh: |
                     Write-Host "STORAGE_ACCOUNT_NAME: $env:STORAGE_ACCOUNT_NAME"
+                    Write-Host "TABLE_NAME: $env:TABLE_NAME"
                     Write-Host "KEY_VAULT_NAME: $env:KEY_VAULT_NAME"
                     Write-Host "PLAN_NAME: $env:PLAN_NAME"
                     Write-Host "FUNCTION_APP_NAME: $env:FUNCTION_APP_NAME"
                     Write-Host "APP_INSIGHTS_NAME: $env:APP_INSIGHTS_NAME"
                   env:
                     STORAGE_ACCOUNT_NAME: $(storageAccountName)
+                    TABLE_NAME: $(tableName)
                     KEY_VAULT_NAME: $(keyVaultName)
                     PLAN_NAME: $(planName)
                     FUNCTION_APP_NAME: $(functionAppName)

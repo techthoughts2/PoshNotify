@@ -9,63 +9,137 @@ if (Get-Module -Name $ModuleName -ErrorAction 'SilentlyContinue') {
     Remove-Module -Name $ModuleName -Force
 }
 Import-Module $PathToManifest -Force
-#-------------------------------------------------------------------------
-$WarningPreference = 'SilentlyContinue'
-#-------------------------------------------------------------------------
-#Import-Module $moduleNamePath -Force
 
 InModuleScope 'PoshNotify' {
     #-------------------------------------------------------------------------
     $WarningPreference = 'SilentlyContinue'
-    $ErrorActionPreference = 'SilentlyContinue'
     #-------------------------------------------------------------------------
+    BeforeAll {
+        $WarningPreference = 'SilentlyContinue'
+        $ErrorActionPreference = 'SilentlyContinue'
+    }
     function Send-TelegramError {
     }
-    $releaseInfo = [System.Collections.ArrayList]@()
-    $obj1 = [PSCustomObject]@{
-        id        = 'tag:github.com,2008:Repository/49609581/v7.2.0-preview.5'
-        updated   = '2021-04-14T23:57:25Z'
-        link      = 'link'
-        title     = 'v7.2.0-preview.5 Release of PowerShell'
-        content   = 'content'
-        author    = 'author'
-        thumbnail = 'thumbnail'
-    }
-    $obj2 = [PSCustomObject]@{
-        id        = 'tag:github.com,2008:Repository/49609581/v7.1.3'
-        updated   = '2021-03-11T23:29:58Z'
-        link      = 'link'
-        title     = 'v7.1.3 Release of PowerShell'
-        content   = 'content'
-        author    = 'author'
-        thumbnail = 'thumbnail'
-    }
-
-    $releaseInfo.Add($obj1) | Out-Null
-    $releaseInfo.Add($obj2) | Out-Null
 
     Context 'Get-PowerShellReleaseInfo' {
         BeforeEach {
-            Mock -CommandName Invoke-RestMethod -MockWith {
+            $releaseInfo = [System.Collections.ArrayList]@()
+            $obj1 = [PSCustomObject]@{
+                url          = 'https://api.github.com/repos/PowerShell/PowerShell/releases/47773891'
+                id           = '47773891'
+                tag_name     = 'v7.1.4'
+                name         = 'v7.1.4 Release of PowerShell'
+                draft        = 'False'
+                prerelease   = 'False'
+                created_at   = '08 / 12 / 21 22:17:28'
+                published_at = '08 / 12 / 21 22:19:31'
+                html_url     = 'https://github.com/PowerShell/PowerShell/releases/tag/v7.1.4'
+            }
+            $obj2 = [PSCustomObject]@{
+                url          = 'https://api.github.com/repos/PowerShell/PowerShell/releases/48290816'
+                id           = '48290816'
+                tag_name     = 'v7.2.0-preview.9'
+                name         = 'v7.2.0-preview.9 Release of PowerShell'
+                draft        = 'False'
+                prerelease   = 'True'
+                created_at   = '08 / 23 / 21 18:14:55'
+                published_at = '08 / 23 / 21 18:34:52'
+                html_url     = 'https://github.com/PowerShell/PowerShell/releases/tag/v7.2.0-preview.9'
+            }
+
+            $releaseInfo.Add($obj1) | Out-Null
+            $releaseInfo.Add($obj2) | Out-Null
+
+            Mock -CommandName Get-GitHubReleaseInfo -MockWith {
                 $releaseInfo
             } #endMock
         } #beforeeach
         Context 'Error' {
-            It 'should return null if an error is encountered getting PowerShell Github data' {
-                Mock -CommandName Invoke-RestMethod -MockWith {
-                    throw 'FakeError'
+            It 'should return null if no release information is returned at all' {
+                Mock -CommandName Get-GitHubReleaseInfo -MockWith {
+                    $null
+                } #endMock
+                Get-PowerShellReleaseInfo | Should -BeNullOrEmpty
+            } #it
+            It 'should return null if the version number can not be parsed properly' {
+                $releaseInfo3 = [System.Collections.ArrayList]@()
+                $obj6 = [PSCustomObject]@{
+                    url          = 'https://api.github.com/repos/PowerShell/PowerShell/releases/47773891'
+                    id           = '47773891'
+                    tag_name     = 'vnotaversionnumber'
+                    name         = 'vnotaversionnumber Release of PowerShell'
+                    draft        = 'False'
+                    prerelease   = 'False'
+                    created_at   = '08 / 12 / 21 22:17:28'
+                    published_at = '08 / 12 / 21 22:19:31'
+                    html_url     = 'https://github.com/PowerShell/PowerShell/releases/tag/v7.1.4'
+                }
+                $obj7 = [PSCustomObject]@{
+                    url          = 'https://api.github.com/repos/PowerShell/PowerShell/releases/48290816'
+                    id           = '48290816'
+                    tag_name     = 'v7.2.0-preview.9'
+                    name         = 'v7.2.0-preview.9 Release of PowerShell'
+                    draft        = 'False'
+                    prerelease   = 'True'
+                    created_at   = '08 / 23 / 21 18:14:55'
+                    published_at = '08 / 23 / 21 18:34:52'
+                    html_url     = 'https://github.com/PowerShell/PowerShell/releases/tag/v7.2.0-preview.9'
+                }
+
+                $releaseInfo3.Add($obj6) | Out-Null
+                $releaseInfo3.Add($obj7) | Out-Null
+
+                Mock -CommandName Get-GitHubReleaseInfo -MockWith {
+                    $releaseInfo3
                 } #endMock
                 Get-PowerShellReleaseInfo | Should -BeNullOrEmpty
             } #it
         } #context-error
         Context 'Success' {
+            It 'should call the Get-GitHubReleaseInfo with the correct repo name' {
+                Mock -CommandName Get-GitHubReleaseInfo {
+                    $RepositoryName | Should -BeExactly 'PowerShell/PowerShell'
+                } -Verifiable
+                Get-PowerShellReleaseInfo
+                Assert-VerifiableMock
+            } #it
+            It 'should return null values if no preview version is returned' {
+                $releaseInfo4 = [System.Collections.ArrayList]@()
+                $obj10 = [PSCustomObject]@{
+                    url          = 'https://api.github.com/repos/PowerShell/PowerShell/releases/47773891'
+                    id           = '47773891'
+                    tag_name     = 'v7.1.4'
+                    name         = 'v7.1.4 Release of PowerShell'
+                    draft        = 'False'
+                    prerelease   = 'False'
+                    created_at   = '08 / 12 / 21 22:17:28'
+                    published_at = '08 / 12 / 21 22:19:31'
+                    html_url     = 'https://github.com/PowerShell/PowerShell/releases/tag/v7.1.4'
+                }
+
+                $releaseInfo4.Add($obj10) | Out-Null
+
+                Mock -CommandName Get-GitHubReleaseInfo -MockWith {
+                    $releaseInfo4
+                } #endMock
+                $eval = Get-PowerShellReleaseInfo
+                $eval.PwshVersion | Should -BeExactly '7.1.4'
+                $eval.PwshTitle | Should -BeExactly 'v7.1.4 Release of PowerShell'
+                $eval.PwshLink | Should -BeExactly 'https://github.com/PowerShell/PowerShell/releases/tag/v7.1.4'
+                $eval.PwshPreviewVersion | Should -BeNullOrEmpty
+                $eval.PwshPreviewTitle | Should -BeNullOrEmpty
+                $eval.PwshPreviewLink | Should -BeNullOrEmpty
+                $eval.PwshPreviewRC | Should -BeNullOrEmpty
+            } #it
             It 'should return expected results if successful' {
                 $eval = Get-PowerShellReleaseInfo
-                $eval.Preview.Major | Should -BeExactly 7
-                $eval.Preview.Minor | Should -BeExactly 2
-                $eval.PreviewRC | Should -BeExactly 5
-                $eval.Pwsh.Major | Should -BeExactly 7
-                $eval.Pwsh.Minor | Should -BeExactly 1
+                $eval.PwshVersion | Should -BeExactly '7.1.4'
+                $eval.PwshTitle | Should -BeExactly 'v7.1.4 Release of PowerShell'
+                $eval.PwshLink | Should -BeExactly 'https://github.com/PowerShell/PowerShell/releases/tag/v7.1.4'
+                $eval.PwshPreviewVersion | Should -BeExactly '7.2.0'
+                $eval.PwshPreviewTitle | Should -BeExactly 'v7.2.0-preview.9 Release of PowerShell'
+                $eval.PwshPreviewLink | Should -BeExactly 'https://github.com/PowerShell/PowerShell/releases/tag/v7.2.0-preview.9'
+                $eval.PwshPreviewRC | Should -BeExactly '9'
             } #it
         } #context-success
     } #context

@@ -131,6 +131,12 @@
             "type": "shell",
             "problemMatcher": "$msCompile",
             "command": "Invoke-Build -Task InfraTest -File './src/PoshNotify.build.ps1'"
+        },
+        {
+            "label": "ADO",
+            "type": "shell",
+            "problemMatcher": "$msCompile",
+            "command": "Invoke-Build -Task ADO -File './src/PoshNotify.build.ps1'"
         }
     ]
 }

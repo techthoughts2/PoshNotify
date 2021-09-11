@@ -250,12 +250,14 @@ stages:
                 # optional step that is useful for debugging to see if you got the correct outputs
                 - pwsh: |
                     Write-Host "STORAGE_ACCOUNT_NAME: $env:STORAGE_ACCOUNT_NAME"
+                    Write-Host "TABLE_NAME: $env:TABLE_NAME"
                     Write-Host "KEY_VAULT_NAME: $env:KEY_VAULT_NAME"
                     Write-Host "PLAN_NAME: $env:PLAN_NAME"
                     Write-Host "FUNCTION_APP_NAME: $env:FUNCTION_APP_NAME"
                     Write-Host "APP_INSIGHTS_NAME: $env:APP_INSIGHTS_NAME"
                   env:
                     STORAGE_ACCOUNT_NAME: $(storageAccountName)
+                    TABLE_NAME: $(tableName)
                     KEY_VAULT_NAME: $(keyVaultName)
                     PLAN_NAME: $(planName)
                     FUNCTION_APP_NAME: $(functionAppName)
@@ -332,12 +334,14 @@ stages:
                 # optional step that is useful for debugging to see if you got the correct outputs
                 - pwsh: |
                     Write-Host "STORAGE_ACCOUNT_NAME: $env:STORAGE_ACCOUNT_NAME"
+                    Write-Host "TABLE_NAME: $env:TABLE_NAME"
                     Write-Host "KEY_VAULT_NAME: $env:KEY_VAULT_NAME"
                     Write-Host "PLAN_NAME: $env:PLAN_NAME"
                     Write-Host "FUNCTION_APP_NAME: $env:FUNCTION_APP_NAME"
                     Write-Host "APP_INSIGHTS_NAME: $env:APP_INSIGHTS_NAME"
                   env:
                     STORAGE_ACCOUNT_NAME: $(storageAccountName)
+                    TABLE_NAME: $(tableName)
                     KEY_VAULT_NAME: $(keyVaultName)
                     PLAN_NAME: $(planName)
                     FUNCTION_APP_NAME: $(functionAppName)

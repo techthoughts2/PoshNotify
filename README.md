@@ -2,7 +2,7 @@
 
 main | dev
 --- | --- |
-![PoshNotify Azure DevOps](https://dev.azure.com/techthoughtsdevops/PoshNotify/_apis/build/status/PoshNotify?branchName=main) | ![PoshNotify Azure DevOps](https://dev.azure.com/JakeMorrison/PoshNotify/_apis/build/status/techthoughts2.PoshNotify?branchName=dev)
+![PoshNotify Azure DevOps](https://dev.azure.com/JakeMorrison/PoshNotify/_apis/build/status/PoshNotify-Main?branchName=main) | ![PoshNotify Azure DevOps](https://dev.azure.com/JakeMorrison/PoshNotify/_apis/build/status/PoshNotify-Dev?branchName=dev)
 
 ## Synopsis
 
